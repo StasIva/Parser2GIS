@@ -2,13 +2,14 @@
 
 import subprocess
 import sys
+from typing import Any
 
 
 class WorkspaceError(Exception):
     """Raised when the workspace environment is not properly configured."""
 
 
-def _git(*args: str) -> subprocess.CompletedProcess:
+def _git(*args: str) -> subprocess.CompletedProcess[Any]:
     """Run a git command and return the result."""
     try:
         return subprocess.run(
@@ -73,3 +74,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
