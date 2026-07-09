@@ -90,3 +90,27 @@ class OrganizationRepo(BaseRepository):
             (task_id, limit, offset),
         ).fetchall()
         return cls._rows_to_dicts(rows)
+
+    @classmethod
+    def search(cls, query: str, task_id: int | None = None,
+               limit: int = 50, offset: int = 0) -> list[dict[str, Any]]:
+        conn = cls._conn()
+        if task_id is not None:
+            rows = conn.execute(
+                """SELECT o.* FROM organizations o
+                   JOIN organizations_fts fts ON o.id = fts.rowid
+                   WHERE organizations_fts MATCH ? AND o.task_id = ?
+                   ORDER BY rank
+                   LIMIT ? OFFSET ?""",
+                (query, task_id, limit, offset),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                """SELECT o.* FROM organizations o
+                   JOIN organizations_fts fts ON o.id = fts.rowid
+                   WHERE organizations_fts MATCH ?
+                   ORDER BY rank
+                   LIMIT ? OFFSET ?""",
+                (query, limit, offset),
+            ).fetchall()
+        return cls._rows_to_dicts(rows)

@@ -85,7 +85,7 @@
 **Result:** All data persisted with indexes, integrity checks, and export support.
 **Dependencies:** EPIC-1
 **Acceptance:** 10,000 records stored and queried in <1 second.
-**Status:** PARTIAL (5.5, 5.7, 5.8 remain)
+**Status:** PARTIAL (5.7, 5.8 remain)
 
 | # | Task | Hours | Status |
 |---|------|-------|--------|
@@ -93,7 +93,7 @@
 | 5.2 | Implement ContactRepo (save contacts per organization) | 1 | DONE |
 | 5.3 | Implement ExportRepo (log each export operation) | 1 | DONE |
 | 5.4 | Implement ParseLogRepo (per-task log entries) | 1 | DONE |
-| 5.5 | Implement full-text search on organization names | 2 | TODO |
+| 5.5 | Implement full-text search on organization names | 2 | DONE |
 | 5.6 | Implement DB integrity check + repair on startup | 2 | DONE |
 | 5.7 | Implement DB backup before destructive operations | 1 | TODO |
 | 5.8 | Implement automatic WAL checkpoint | 1 | TODO |
@@ -214,7 +214,7 @@ EPIC-2 (2GIS Source) — Task 2.10 (browser fallback)
 
 ### Stage 5 — REMAINING
 EPIC-9 (Build) — Tasks 9.1–9.9
-EPIC-5 (Storage) — Tasks 5.5, 5.7, 5.8
+EPIC-5 (Storage) — Tasks 5.7, 5.8
 EPIC-8 (Logging) — Tasks 8.4, 8.6
 
 ### Post-MVP

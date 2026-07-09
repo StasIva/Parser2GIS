@@ -99,6 +99,40 @@ DDL_STATEMENTS: list[str] = [
     """,
 ]
 
+FTS_STATEMENTS: list[str] = [
+    """
+    CREATE VIRTUAL TABLE IF NOT EXISTS organizations_fts USING fts5(
+        name, city, address, rubric_name,
+        content='organizations',
+        content_rowid='id',
+        tokenize='trigram'
+    )
+    """,
+]
+
+FTS_TRIGGERS: list[str] = [
+    """
+    CREATE TRIGGER IF NOT EXISTS organizations_ai AFTER INSERT ON organizations BEGIN
+        INSERT INTO organizations_fts(rowid, name, city, address, rubric_name)
+        VALUES (new.id, new.name, new.city, new.address, new.rubric_name);
+    END
+    """,
+    """
+    CREATE TRIGGER IF NOT EXISTS organizations_ad AFTER DELETE ON organizations BEGIN
+        INSERT INTO organizations_fts(organizations_fts, rowid, name, city, address, rubric_name)
+        VALUES ('delete', old.id, old.name, old.city, old.address, old.rubric_name);
+    END
+    """,
+    """
+    CREATE TRIGGER IF NOT EXISTS organizations_au AFTER UPDATE ON organizations BEGIN
+        INSERT INTO organizations_fts(organizations_fts, rowid, name, city, address, rubric_name)
+        VALUES ('delete', old.id, old.name, old.city, old.address, old.rubric_name);
+        INSERT INTO organizations_fts(rowid, name, city, address, rubric_name)
+        VALUES (new.id, new.name, new.city, new.address, new.rubric_name);
+    END
+    """,
+]
+
 INDEX_STATEMENTS: list[str] = [
     "CREATE INDEX IF NOT EXISTS idx_organizations_task_id ON organizations(task_id)",
     "CREATE INDEX IF NOT EXISTS idx_organizations_source_id ON organizations(source_id)",
@@ -118,6 +152,11 @@ def migrate() -> None:
         conn.execute(stmt)
     for stmt in INDEX_STATEMENTS:
         conn.execute(stmt)
+    for stmt in FTS_STATEMENTS:
+        conn.execute(stmt)
+    for stmt in FTS_TRIGGERS:
+        conn.execute(stmt)
+    conn.execute("INSERT INTO organizations_fts(organizations_fts) VALUES('rebuild')")
     conn.commit()
 
 

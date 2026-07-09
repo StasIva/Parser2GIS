@@ -141,6 +141,45 @@ class TestOrganizationRepo:
         assert len(page2) == 2
 
 
+class TestOrganizationFts:
+    @property
+    def _tid(self) -> int:
+        tasks = TaskRepo.get_all()
+        return tasks[0]["id"] if tasks else 1
+
+    def test_search_by_name(self) -> None:
+        tid = self._tid
+        OrganizationRepo.create(task_id=tid, name="Автосервис Москва Премиум")
+        OrganizationRepo.create(task_id=tid, name="Автомойка Чисто")
+        OrganizationRepo.create(task_id=tid, name="Шиномонтаж")
+        results = OrganizationRepo.search("авто", task_id=tid)
+        names = {r["name"] for r in results}
+        assert "Автосервис Москва Премиум" in names
+        assert "Автомойка Чисто" in names
+        assert "Шиномонтаж" not in names
+
+    def test_search_across_all_tasks(self) -> None:
+        tid = self._tid
+        OrganizationRepo.create(task_id=tid, name="Test Org Alpha")
+        results = OrganizationRepo.search("Alpha")
+        assert len(results) >= 1
+        assert results[0]["name"] == "Test Org Alpha"
+
+    def test_search_no_results(self) -> None:
+        tid = self._tid
+        results = OrganizationRepo.search("zzzznotfound", task_id=tid)
+        assert results == []
+
+    def test_search_limit_offset(self) -> None:
+        tid = self._tid
+        for i in range(5):
+            OrganizationRepo.create(task_id=tid, name=f"Searchable Org {i}")
+        page1 = OrganizationRepo.search("Searchable", task_id=tid, limit=2, offset=0)
+        assert len(page1) == 2
+        page2 = OrganizationRepo.search("Searchable", task_id=tid, limit=2, offset=2)
+        assert len(page2) == 2
+
+
 class TestTaskRepo:
     @property
     def _cid(self) -> int:
