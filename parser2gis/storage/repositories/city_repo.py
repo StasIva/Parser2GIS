@@ -16,7 +16,6 @@ class CityRepo(BaseRepository):
             "INSERT INTO cities (name, source_id, region) VALUES (?, ?, ?)",
             (name, source_id, region),
         )
-        conn.commit()
         return cls.get_by_id(cursor.lastrowid)
 
     @classmethod
@@ -44,6 +43,5 @@ class CityRepo(BaseRepository):
                 "UPDATE cities SET source_id = ?, region = ? WHERE id = ?",
                 (source_id, region, existing["id"]),
             )
-            conn.commit()
             return cls.get_by_id(existing["id"])
         return cls.create(name, source_id, region)

@@ -44,7 +44,6 @@ class BaseRepository:
         cursor = conn.execute(
             f"DELETE FROM {cls.table} WHERE id = ?", (record_id,)
         )
-        conn.commit()
         return cursor.rowcount > 0
 
     @classmethod

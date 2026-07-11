@@ -23,7 +23,6 @@ class TaskRepo(BaseRepository):
             "INSERT INTO tasks (name, city_id, rubric_id) VALUES (?, ?, ?)",
             (name, city_id, rubric_id),
         )
-        conn.commit()
         return cls.get_by_id(cursor.lastrowid)
 
     @classmethod
@@ -37,7 +36,6 @@ class TaskRepo(BaseRepository):
             f"completed_at = {completed_at} WHERE id = ?",
             (status, task_id),
         )
-        conn.commit()
         return cls.get_by_id(task_id)
 
     @classmethod
@@ -62,7 +60,6 @@ class TaskRepo(BaseRepository):
             f"UPDATE tasks SET {', '.join(updates)} WHERE id = ?",
             params,
         )
-        conn.commit()
         return cls.get_by_id(task_id)
 
     @classmethod
@@ -72,7 +69,6 @@ class TaskRepo(BaseRepository):
             "UPDATE tasks SET checkpoint_data = ?, updated_at = datetime('now') WHERE id = ?",
             (checkpoint_data, task_id),
         )
-        conn.commit()
 
     @classmethod
     def find_by_status(cls, status: str) -> list[dict[str, Any]]:

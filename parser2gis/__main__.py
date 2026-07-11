@@ -62,7 +62,7 @@ def _cmd_run(args: argparse.Namespace) -> None:
     from parser2gis.storage.repositories.seed import seed
     from parser2gis.source_2gis.http_client import HttpClient
     from parser2gis.source_2gis.org_fetcher import OrgFetcher
-    from parser2gis.storage.repositories.organization_repo import OrganizationRepo
+    from parser2gis.services.organization_service import OrganizationService
     from parser2gis.logging.app_logger import AppLogger
 
     configure_database("")
@@ -82,23 +82,24 @@ def _cmd_run(args: argparse.Namespace) -> None:
         print(f"Rubric '{args.rubric}' not found", file=sys.stderr)
         sys.exit(1)
 
-    AppLogger.info(f"Fetching organizations for {city['name']}/{rubric['name']}")
+    AppLogger.info(f"Fetching organizations for {city.name}/{rubric.name}")
 
     def _on_progress(found: int, total: int) -> None:
         print(f"  Progress: {found}/{total}", end="\r")
 
-    orgs = fetcher.fetch_all(str(city.get("id") or city.get("source_id", "")),
-                             str(rubric.get("id") or rubric.get("source_id", "")),
+    orgs = fetcher.fetch_all(str(city.id or city.source_id or ""),
+                             str(rubric.id or rubric.source_id or ""),
                              on_progress=_on_progress)
 
     print(f"\nFound {len(orgs)} organizations")
 
+    org_service = OrganizationService()
     saved = 0
     for org in orgs:
-        OrganizationRepo.create(task_id=0, name=org.get("name", ""),
-                                source_id=str(org.get("id", "")),
-                                city=org.get("city", ""),
-                                address=org.get("address", ""))
+        org_service.create(task_id=0, name=org.get("name", ""),
+                           source_id=str(org.get("id", "")),
+                           city=org.get("city", ""),
+                           address=org.get("address", ""))
         saved += 1
 
     print(f"Saved {saved} organizations")
@@ -110,29 +111,29 @@ def _cmd_list(args: argparse.Namespace) -> None:
     from parser2gis.storage.connection import configure_database
     from parser2gis.storage.migration import migrate
     from parser2gis.storage.repositories.seed import seed
+    from parser2gis.services.city_service import CityService
+    from parser2gis.services.rubric_service import RubricService
+    from parser2gis.services.task_service import TaskService
 
     configure_database("")
     migrate()
     seed()
 
     if args.resource == "cities":
-        from parser2gis.storage.repositories.city_repo import CityRepo
-        for city in CityRepo.get_all():
-            print(f"  {city['id']}: {city['name']}")
+        for city in CityService().get_all():
+            print(f"  {city.id}: {city.name}")
     elif args.resource == "rubrics":
-        from parser2gis.storage.repositories.rubric_repo import RubricRepo
-        for rubric in RubricRepo.get_all():
-            print(f"  {rubric['id']}: {rubric['name']}")
+        for rubric in RubricService().get_all():
+            print(f"  {rubric.id}: {rubric.name}")
     elif args.resource == "tasks":
-        from parser2gis.storage.repositories.task_repo import TaskRepo
-        for task in TaskRepo.get_all():
-            print(f"  {task['id']}: {task['name']} [{task['status']}]")
+        for task in TaskService().get_all():
+            print(f"  {task.id}: {task.name} [{task.status}]")
 
 
 def _cmd_export(args: argparse.Namespace) -> None:
     from parser2gis.storage.connection import configure_database
     from parser2gis.storage.migration import migrate
-    from parser2gis.storage.repositories.organization_repo import OrganizationRepo
+    from parser2gis.services.organization_service import OrganizationService
     from parser2gis.exporter.xlsx_exporter import XlsxExporter
     from parser2gis.exporter.csv_exporter import CsvExporter
     from parser2gis.exporter.json_exporter import JsonExporter
@@ -140,7 +141,7 @@ def _cmd_export(args: argparse.Namespace) -> None:
     configure_database("")
     migrate()
 
-    orgs = OrganizationRepo.find_by_task_id(args.task_id)
+    orgs = OrganizationService().find_by_task_id(args.task_id)
     if not orgs:
         print(f"No organizations found for task {args.task_id}")
         sys.exit(1)
@@ -151,7 +152,7 @@ def _cmd_export(args: argparse.Namespace) -> None:
         "json": JsonExporter(),
     }
     exporter = exporters[args.format]
-    path = exporter.export(orgs, args.output)
+    path = exporter.export([o.to_dict() for o in orgs], args.output)
     print(f"Exported {len(orgs)} records to {path}")
 
 
@@ -181,14 +182,16 @@ def _cmd_gui() -> None:
     sys.exit(app.exec())
 
 
-def _resolve_city(name: str) -> dict | None:
-    from parser2gis.storage.repositories.city_repo import CityRepo
-    return CityRepo.find_by_name(name)
+def _resolve_city(name: str) -> City | None:
+    from parser2gis.services.city_service import CityService
+    from parser2gis.domain.models import City
+    return CityService().find_by_name(name)
 
 
-def _resolve_rubric(name: str) -> dict | None:
-    from parser2gis.storage.repositories.rubric_repo import RubricRepo
-    return RubricRepo.find_by_name(name)
+def _resolve_rubric(name: str) -> Rubric | None:
+    from parser2gis.services.rubric_service import RubricService
+    from parser2gis.domain.models import Rubric
+    return RubricService().find_by_name(name)
 
 
 if __name__ == "__main__":

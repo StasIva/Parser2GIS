@@ -17,7 +17,6 @@ class ContactRepo(BaseRepository):
             "INSERT INTO contacts (organization_id, type, value, is_primary) VALUES (?, ?, ?, ?)",
             (organization_id, type_, value, 1 if is_primary else 0),
         )
-        conn.commit()
         return cls.get_by_id(cursor.lastrowid)
 
     @classmethod
@@ -35,5 +34,4 @@ class ContactRepo(BaseRepository):
         cursor = conn.execute(
             "DELETE FROM contacts WHERE organization_id = ?", (organization_id,)
         )
-        conn.commit()
         return cursor.rowcount

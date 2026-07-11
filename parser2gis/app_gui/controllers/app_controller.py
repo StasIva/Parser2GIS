@@ -2,13 +2,16 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
-from parser2gis.storage.repositories.city_repo import CityRepo
-from parser2gis.storage.repositories.rubric_repo import RubricRepo
-from parser2gis.storage.repositories.task_repo import TaskRepo
+from parser2gis.services.city_service import CityService
+from parser2gis.services.rubric_service import RubricService
+from parser2gis.services.task_service import TaskService
 
 
 class AppController:
     def __init__(self) -> None:
+        self._city_service = CityService()
+        self._rubric_service = RubricService()
+        self._task_service = TaskService()
         self._on_tasks_changed: Callable[[], None] | None = None
         self._on_progress: Callable[[int, int, int], None] | None = None
 
@@ -16,34 +19,34 @@ class AppController:
         self._on_tasks_changed = callback
 
     def get_tasks(self) -> list[dict[str, Any]]:
-        return TaskRepo.get_all()
+        return [t.to_dict() for t in self._task_service.get_all()]
 
     def get_cities(self) -> list[dict[str, Any]]:
-        return CityRepo.get_all()
+        return [c.to_dict() for c in self._city_service.get_all()]
 
     def get_rubrics_tree(self) -> list[dict[str, Any]]:
-        return RubricRepo.find_tree()
+        return [r.to_dict() for r in self._rubric_service.find_tree()]
 
     def create_task(self, name: str, city_id: int, rubric_id: int) -> dict[str, Any]:
-        task = TaskRepo.create(name, city_id, rubric_id)
+        task = self._task_service.create(name, city_id, rubric_id)
         if self._on_tasks_changed:
             self._on_tasks_changed()
-        return task
+        return task.to_dict()
 
     def start_task(self, task_id: int) -> None:
-        TaskRepo.update_status(task_id, "running")
+        self._task_service.update_status(task_id, "running")
         if self._on_tasks_changed:
             self._on_tasks_changed()
 
     def pause_task(self, task_id: int) -> None:
-        TaskRepo.update_status(task_id, "paused")
+        self._task_service.update_status(task_id, "paused")
         if self._on_tasks_changed:
             self._on_tasks_changed()
 
     def stop_task(self, task_id: int) -> None:
-        TaskRepo.update_status(task_id, "done")
+        self._task_service.update_status(task_id, "done")
         if self._on_tasks_changed:
             self._on_tasks_changed()
 
     def get_summary(self) -> dict[str, int]:
-        return TaskRepo.get_summary()
+        return self._task_service.get_summary()

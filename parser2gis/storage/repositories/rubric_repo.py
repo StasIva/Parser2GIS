@@ -17,7 +17,6 @@ class RubricRepo(BaseRepository):
             "INSERT INTO rubrics (name, parent_id, source_id, sort_order) VALUES (?, ?, ?, ?)",
             (name, parent_id, source_id, sort_order),
         )
-        conn.commit()
         return cls.get_by_id(cursor.lastrowid)
 
     @classmethod
@@ -65,6 +64,5 @@ class RubricRepo(BaseRepository):
                 "UPDATE rubrics SET parent_id = ?, source_id = ?, sort_order = ? WHERE id = ?",
                 (parent_id, source_id, sort_order, existing["id"]),
             )
-            conn.commit()
             return cls.get_by_id(existing["id"])
         return cls.create(name, parent_id, source_id, sort_order)

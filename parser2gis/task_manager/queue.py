@@ -4,33 +4,33 @@ import threading
 from queue import PriorityQueue
 from typing import Any, Callable
 
-from parser2gis.task_manager.models import TaskInfo
+from parser2gis.domain.models import Task
 
 
 class TaskQueue:
     def __init__(self, max_concurrent: int = 3) -> None:
         self._max_concurrent = max_concurrent
-        self._pending: PriorityQueue[tuple[int, int, TaskInfo]] = PriorityQueue()
+        self._pending: PriorityQueue[tuple[int, int, Task]] = PriorityQueue()
         self._running: dict[int, threading.Thread] = {}
         self._lock = threading.Lock()
         self._stop_event = threading.Event()
 
-    def enqueue(self, task: TaskInfo, priority: int = 0) -> None:
+    def enqueue(self, task: Task, priority: int = 0) -> None:
         self._queue.put((priority, task.id, task))
 
-    def dequeue(self) -> TaskInfo | None:
+    def dequeue(self) -> Task | None:
         try:
             _, _, task = self._queue.get_nowait()
             return task
         except Exception:
             return None
 
-    def start(self, worker: Callable[[TaskInfo], None]) -> None:
+    def start(self, worker: Callable[[Task], None]) -> None:
         self._stop_event.clear()
         thread = threading.Thread(target=self._run_loop, args=(worker,), daemon=True)
         thread.start()
 
-    def _run_loop(self, worker: Callable[[TaskInfo], None]) -> None:
+    def _run_loop(self, worker: Callable[[Task], None]) -> None:
         while not self._stop_event.is_set():
             with self._lock:
                 if len(self._running) >= self._max_concurrent:
@@ -45,7 +45,7 @@ class TaskQueue:
             else:
                 self._stop_event.wait(0.5)
 
-    def _run_task(self, task: TaskInfo, worker: Callable[[TaskInfo], None]) -> None:
+    def _run_task(self, task: Task, worker: Callable[[Task], None]) -> None:
         try:
             worker(task)
         finally:

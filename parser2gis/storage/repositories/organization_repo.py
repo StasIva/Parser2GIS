@@ -30,7 +30,6 @@ class OrganizationRepo(BaseRepository):
             (task_id, source_id, name, city, address, phones, emails,
              website, social, rubric_name, work_hours, lat, lon, raw_json),
         )
-        conn.commit()
         return cls.get_by_id(cursor.lastrowid)
 
     @classmethod

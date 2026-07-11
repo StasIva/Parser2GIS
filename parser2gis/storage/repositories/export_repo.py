@@ -17,7 +17,6 @@ class ExportRepo(BaseRepository):
             "INSERT INTO exports (task_id, format, file_path, record_count, status) VALUES (?, ?, ?, ?, ?)",
             (task_id, fmt, file_path, record_count, status),
         )
-        conn.commit()
         return cls.get_by_id(cursor.lastrowid)
 
     @classmethod
@@ -28,7 +27,6 @@ class ExportRepo(BaseRepository):
             "UPDATE exports SET status = ?, record_count = ?, error_message = ? WHERE id = ?",
             (status, record_count, error_message, export_id),
         )
-        conn.commit()
         return cls.get_by_id(export_id)
 
     @classmethod

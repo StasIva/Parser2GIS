@@ -17,7 +17,6 @@ class ParseLogRepo(BaseRepository):
             "INSERT INTO parse_logs (task_id, level, message, source) VALUES (?, ?, ?, ?)",
             (task_id, level, message, source),
         )
-        conn.commit()
         return cls.get_by_id(cursor.lastrowid)
 
     @classmethod

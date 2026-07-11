@@ -29,6 +29,8 @@ def _db() -> None:
         rubric = RubricRepo.find_by_name("Автосервис")
         if city and rubric:
             TaskRepo.create("Test Task", city_id=city["id"], rubric_id=rubric["id"])
+        # Close any implicit transaction left by fixture setup
+        ConnectionManager.commit()
         yield
         ConnectionManager.close_all()
 
@@ -477,10 +479,10 @@ class TestTaskManagerModels:
         assert TaskStatus.can_transition("done", "running") is False
         assert TaskStatus.can_transition("error", "created") is True
 
-    def test_task_info_from_dict(self) -> None:
-        from parser2gis.task_manager.models import TaskInfo
+    def test_task_from_dict(self) -> None:
+        from parser2gis.domain.models import Task
 
-        info = TaskInfo.from_dict({
+        info = Task.from_dict({
             "id": 1, "name": "Test", "city_id": 1, "rubric_id": 1,
             "status": "created",
         })
