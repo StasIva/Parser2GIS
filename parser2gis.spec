@@ -1,33 +1,25 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-"""PyInstaller spec for Parser2GIS.
-
-Produces a single-folder portable build.
-Run: pyinstaller parser2gis.spec
-"""
-
 import os
-from pathlib import Path
 
 BLOCK_CIPHER_LIST = None
 
-PROJECT_ROOT = Path(__file__).resolve().parent
+PROJECT_ROOT = os.path.dirname(os.path.abspath(SPEC))
 
-DATASETS = []
+datas = []
 
 # console_export.js shipped as a static data file
-console_export_js = os.path.join(
-    "parser2gis", "chatgpt_export", "console_export.js"
+js_path = os.path.join(
+    PROJECT_ROOT, "parser2gis", "chatgpt_export", "console_export.js"
 )
-js_path = PROJECT_ROOT / console_export_js
-if js_path.exists():
-    DATASETS.append((str(js_path), "parser2gis/chatgpt_export"))
+if os.path.exists(js_path):
+    datas.append((js_path, "parser2gis/chatgpt_export"))
 
 a = Analysis(
     ["parser2gis/__main__.py"],
-    pathex=[str(PROJECT_ROOT)],
+    pathex=[PROJECT_ROOT],
     binaries=[],
-    datas=DATASETS,
+    datas=datas,
     hiddenimports=[
         # Lazy imports in __main__.py commands
         "parser2gis.storage.connection",
@@ -110,15 +102,13 @@ a = Analysis(
     optimize=1,
 )
 
-pyz = PYZ(a.pure, a.zipped_data, cipher_blocks=BLOCK_CIPHER_LIST)
+pyz = PYZ(a.pure)
 
 exe = EXE(
     pyz,
     a.scripts,
-    a.binaries,
-    a.zipfiles,
-    a.datas,
     [],
+    exclude_binaries=True,
     name="parser2gis",
     debug=False,
     bootloader_ignore_signals=False,
@@ -132,10 +122,9 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    contents_directory=".",
 )
 
-COLLECT(
+coll = COLLECT(
     exe,
     a.binaries,
     a.zipfiles,

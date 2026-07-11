@@ -11,6 +11,21 @@ Usage:
 Requirements (installed automatically via pip):
     pyinstaller>=6.0
     All project dependencies (see pyproject.toml)
+
+Assumptions:
+    - Python 3.12+ with PySide6, httpx, openpyxl, pydantic installed.
+    - Run from the project root directory.
+    - Virtual environment activated (or build deps available globally).
+
+Known limitations:
+    - Playwright browser automation is NOT bundled (EPIC-9.2).
+    - GUI module (PySide6) requires a display server at runtime.
+    - No application icon or Windows metadata (EPIC-9.3).
+    - No installer or Windows code signing (post-MVP).
+    - Build tested on Linux; Windows cross-build not supported.
+    - Reproducibility relies on PYTHONHASHSEED=0; exact byte-level
+      reproducibility also requires matching Python/PyInstaller versions
+      and the same OS platform.
 """
 
 from __future__ import annotations
@@ -87,13 +102,11 @@ def build() -> None:
     if platform.system() == "Windows":
         env["PYINSTALLER_DETERMINISTIC"] = "1"
 
-    result = _run(
-        sys.executable,
-        "-m",
-        "PyInstaller",
-        str(SPEC_FILE),
-        "--noconfirm",
-        "--log-level=INFO",
+    result = subprocess.run(
+        [sys.executable, "-m", "PyInstaller", str(SPEC_FILE), "--noconfirm", "--log-level=INFO"],
+        cwd=str(PROJECT_ROOT),
+        capture_output=True,
+        text=True,
         env=env,
     )
     print(result.stdout)
@@ -111,7 +124,9 @@ def verify() -> None:
         print(f"Error: {app_dir} does not exist", file=sys.stderr)
         sys.exit(1)
 
-    # Check main executable
+    # In PyInstaller 6+ the bundled content lives under _internal/
+    internal_dir = app_dir / "_internal"
+
     if platform.system() == "Windows":
         exe_path = app_dir / f"{APP_NAME}.exe"
     else:
@@ -122,23 +137,33 @@ def verify() -> None:
     if not exe_path.exists():
         errors.append(f"Missing main executable: {exe_path}")
 
-    required_packages = [
-        "parser2gis",
-        "pydantic",
-        "httpx",
-        "openpyxl",
-    ]
-    for pkg in required_packages:
-        pkg_dir = app_dir / pkg.replace(".", "/")
-        if pkg == "parser2gis":
-            if not (app_dir / "parser2gis").is_dir():
-                errors.append(f"Missing package directory: {pkg}")
-        elif not pkg_dir.is_dir():
-            errors.append(f"Missing package directory: {pkg}")
+    # Check that application code is bundled
+    app_pkg = internal_dir / "parser2gis"
+    if not app_pkg.is_dir():
+        errors.append(f"Missing application package: {app_pkg}")
 
-    data_file = app_dir / "parser2gis" / "chatgpt_export" / "console_export.js"
+    # Check data files
+    data_file = internal_dir / "parser2gis" / "chatgpt_export" / "console_export.js"
     if not data_file.exists():
         errors.append(f"Missing data file: {data_file}")
+
+    # Quick dry-run: executable should print help/usage
+    try:
+        result = subprocess.run(
+            [str(exe_path), "--help"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            env={**os.environ, "PARSER2GIS_DB_PATH": "/tmp/parser2gis_verify_test.db"},
+        )
+        if result.returncode != 0:
+            errors.append(f"Executable --help exited with code {result.returncode}")
+            if result.stderr:
+                errors.append(f"  stderr: {result.stderr[:500]}")
+    except FileNotFoundError:
+        errors.append(f"Executable not found: {exe_path}")
+    except subprocess.TimeoutExpired:
+        errors.append("Executable --help timed out (15s)")
 
     file_count = len(list(app_dir.rglob("*")))
 

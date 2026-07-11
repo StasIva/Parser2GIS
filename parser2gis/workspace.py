@@ -36,6 +36,10 @@ def validate_workspace() -> None:
 
     Raises WorkspaceError if any check fails.
     """
+    # Skip validation when running in a PyInstaller bundle
+    if getattr(sys, "frozen", False):
+        return
+
     result = _git("rev-parse", "--show-toplevel")
     if result.returncode != 0:
         raise WorkspaceError("Not inside a Git repository")
