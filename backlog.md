@@ -163,7 +163,7 @@
 
 | # | Task | Hours | Status |
 |---|------|-------|--------|
-| 9.1 | Write PyInstaller spec file + build script | 3 | TODO |
+| 9.1 | Write PyInstaller spec file + build script | 3 | DONE |
 | 9.2 | Configure PyInstaller hooks for Playwright/Selenium | 2 | TODO |
 | 9.3 | Add application icon and Windows metadata | 1 | TODO |
 | 9.4 | Implement city/rubric directory update mechanism | 3 | TODO |

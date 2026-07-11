@@ -17,12 +17,16 @@ dependencies = [
 
 [project.scripts]
 parser2gis = "parser2gis.__main__:main"
+chatgpt-export = "parser2gis.chatgpt_export.cli:main"
+
+[project.optional-dependencies]
+build = ["pyinstaller>=6.0"]
 
 [tool.setuptools.packages.find]
 include = ["parser2gis*"]
 
 [tool.setuptools.package-data]
-"*" = ["*.json"]
+"*" = ["*.json", "*.js"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
