@@ -15,6 +15,17 @@ js_path = os.path.join(
 if os.path.exists(js_path):
     datas.append((js_path, "parser2gis/chatgpt_export"))
 
+# Application icon assets
+assets_dir = os.path.join(PROJECT_ROOT, "parser2gis", "assets")
+if os.path.isdir(assets_dir):
+    for fname in os.listdir(assets_dir):
+        fpath = os.path.join(assets_dir, fname)
+        if os.path.isfile(fpath) and not fname.endswith(".rc"):
+            datas.append((fpath, "parser2gis/assets"))
+
+# Application icon
+icon_path = os.path.join(PROJECT_ROOT, "parser2gis", "assets", "app_icon.ico")
+
 a = Analysis(
     ["parser2gis/__main__.py"],
     pathex=[PROJECT_ROOT],
@@ -43,6 +54,8 @@ a = Analysis(
         "parser2gis.services.export_service",
         "parser2gis.logging.app_logger",
         "parser2gis.logging.error_logger",
+        "parser2gis.logging.export_logger",
+        "parser2gis.logging.log_rotation",
         "parser2gis.logging.task_logger",
         "parser2gis.exporter.xlsx_exporter",
         "parser2gis.exporter.csv_exporter",
@@ -67,12 +80,17 @@ a = Analysis(
         "parser2gis.parser.address_normalizer",
         "parser2gis.parser.phone_extractor",
         "parser2gis.parser.deduplicator",
+        "parser2gis.services.directory_update_service",
         "parser2gis.settings.settings",
         "parser2gis.storage.cache",
         # Third-party hidden imports
         "pydantic",
         "openpyxl",
         "httpx",
+        "PySide6",
+        "PySide6.QtCore",
+        "PySide6.QtWidgets",
+        "PySide6.QtGui",
     ],
     hookspath=[],
     hooksconfig={},
@@ -104,6 +122,9 @@ a = Analysis(
 
 pyz = PYZ(a.pure)
 
+icon_path = os.path.join(PROJECT_ROOT, "parser2gis", "assets", "icon.ico")
+version_rc_path = os.path.join(PROJECT_ROOT, "parser2gis", "assets", "version.rc")
+
 exe = EXE(
     pyz,
     a.scripts,
@@ -122,6 +143,8 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon=icon_path if os.path.exists(icon_path) else None,
+    version=version_rc_path if os.path.exists(version_rc_path) else None,
 )
 
 coll = COLLECT(

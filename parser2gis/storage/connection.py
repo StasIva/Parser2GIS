@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 import sqlite3
 import threading
 from pathlib import Path
@@ -66,6 +67,7 @@ class ConnectionManager:
         conn = cls.connection()
         conn.commit()
         cls._local.in_transaction = False
+        cls.wal_checkpoint()
 
     @classmethod
     def rollback(cls) -> None:
@@ -76,6 +78,35 @@ class ConnectionManager:
     @classmethod
     def in_transaction(cls) -> bool:
         return getattr(cls._local, "in_transaction", False)
+
+    @classmethod
+    def backup(cls) -> str:
+        src_path = cls.db_path()
+        if not src_path:
+            raise RuntimeError("Database path not configured")
+
+        src = Path(src_path)
+        backup_dir = src.parent / "backups"
+        backup_dir.mkdir(parents=True, exist_ok=True)
+
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
+        backup_path = backup_dir / f"{src.name}.{timestamp}.bak"
+
+        # Use a dedicated connection so backup never blocks on an open tx
+        src_conn = sqlite3.connect(str(src))
+        dst_conn = sqlite3.connect(str(backup_path))
+        try:
+            src_conn.backup(dst_conn)
+        finally:
+            dst_conn.close()
+            src_conn.close()
+
+        return str(backup_path)
+
+    @classmethod
+    def wal_checkpoint(cls) -> None:
+        conn = cls.connection()
+        conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
 
 
 def get_connection() -> sqlite3.Connection:

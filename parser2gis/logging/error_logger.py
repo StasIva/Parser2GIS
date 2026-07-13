@@ -3,6 +3,8 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
+from parser2gis.logging.log_rotation import make_rotating_file_handler
+
 
 class ErrorLogger:
     _logger: logging.Logger | None = None
@@ -16,8 +18,8 @@ class ErrorLogger:
             logger = logging.getLogger("parser2gis.errors")
             logger.setLevel(logging.ERROR)
 
-            handler = logging.FileHandler(
-                str(log_dir / "source_errors.log"), encoding="utf-8", mode="a"
+            handler = make_rotating_file_handler(
+                str(log_dir / "source_errors.log"), encoding="utf-8",
             )
             handler.setLevel(logging.ERROR)
             formatter = logging.Formatter(

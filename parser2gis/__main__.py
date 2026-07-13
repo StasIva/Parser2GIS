@@ -39,6 +39,19 @@ def main() -> None:
 
     gui_parser = sub.add_parser("gui", help="Launch the desktop application")
 
+    update_parser = sub.add_parser("update-directory", help="Update city and rubric directory from 2GIS API")
+    update_parser.add_argument("--resource", choices=["cities", "rubrics", "all"],
+                                default="all", help="Which resource to update")
+
+    chatgpt_parser = sub.add_parser("chatgpt-export", help="Export a ChatGPT conversation to markdown")
+    chatgpt_parser.add_argument("--export-path", required=True,
+                                 help="Path to ChatGPT conversations.json (from data export)")
+    chatgpt_parser.add_argument("--conversation-id", required=True,
+                                 help="Conversation ID or URL (e.g. 6a4f46fe-b788-83eb-a1ea-7233173bc656)")
+    chatgpt_parser.add_argument("--output", required=True, help="Output .md file path")
+    chatgpt_parser.add_argument("--handoff", action="store_true",
+                                 help="Generate a handoff document instead of plain markdown")
+
     args = parser.parse_args()
 
     if args.command == "run":
@@ -51,6 +64,8 @@ def main() -> None:
         _cmd_seed()
     elif args.command == "gui":
         _cmd_gui()
+    elif args.command == "update-directory":
+        _cmd_update_directory(args)
     else:
         parser.print_help()
         sys.exit(0)
@@ -182,10 +197,72 @@ def _cmd_gui() -> None:
     sys.exit(app.exec())
 
 
-def _resolve_city(name: str) -> City | None:
-    from parser2gis.services.city_service import CityService
-    from parser2gis.domain.models import City
-    return CityService().find_by_name(name)
+def _cmd_chatgpt_export(args: argparse.Namespace) -> None:
+    from parser2gis.chatgpt_export import (
+        parse_conversations_json,
+        find_conversation_by_id,
+        conversation_to_markdown,
+        conversation_to_handoff,
+    )
+
+    conv_id = args.conversation_id
+    if conv_id.startswith("https://chatgpt.com/c/"):
+        conv_id = conv_id.replace("https://chatgpt.com/c/", "").split("?")[0]
+
+    conversations = parse_conversations_json(args.export_path)
+    conv = find_conversation_by_id(conversations, conv_id)
+    if not conv:
+        print(f"Conversation {conv_id} not found in {args.export_path}", file=sys.stderr)
+        print(f"Available conversations: {len(conversations)} total", file=sys.stderr)
+        sys.exit(1)
+
+    if args.handoff:
+        md = conversation_to_handoff(conv)
+    else:
+        md = conversation_to_markdown(conv)
+
+    with open(args.output, "w", encoding="utf-8") as f:
+        f.write(md)
+    print(f"Exported {len(conv.messages)} messages to {args.output}")
+
+
+def _cmd_update_directory(args: argparse.Namespace) -> None:
+    from parser2gis.storage.connection import configure_database
+    from parser2gis.storage.migration import migrate
+    from parser2gis.storage.repositories.seed import seed
+    from parser2gis.services.directory_update_service import DirectoryUpdateService
+    from parser2gis.source_2gis.http_client import HttpClient
+
+    configure_database("")
+    migrate()
+    seed()
+
+    client = HttpClient(delay_ms=200)
+    updater = DirectoryUpdateService(client)
+
+    resource = args.resource or "all"
+    result = updater.update_all() if resource == "all" else (
+        updater.update_cities() if resource == "cities" else updater.update_rubrics()
+    )
+
+    updater.close()
+
+    if resource in ("all", "cities"):
+        print(
+            f"Cities: {result.cities_found} found, "
+            f"{result.cities_added} added, "
+            f"{result.cities_updated} updated"
+        )
+    if resource in ("all", "rubrics"):
+        print(
+            f"Rubrics: {result.rubrics_found} found, "
+            f"{result.rubrics_added} added, "
+            f"{result.rubrics_updated} updated"
+        )
+    if result.errors:
+        print("Errors:", file=sys.stderr)
+        for err in result.errors:
+            print(f"  - {err}", file=sys.stderr)
 
 
 def _resolve_rubric(name: str) -> Rubric | None:

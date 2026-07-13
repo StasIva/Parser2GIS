@@ -40,8 +40,6 @@ def seed() -> None:
             (rubric["name"], rubric["sort_order"]),
         )
 
-    conn.commit()
-
 
 if __name__ == "__main__":
     seed()

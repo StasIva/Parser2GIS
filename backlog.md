@@ -150,9 +150,9 @@
 | 8.1 | Implement application-wide logger (file + console) | 2 | DONE |
 | 8.2 | Implement per-task logger (separate file per task) | 2 | DONE |
 | 8.3 | Implement source error logger (2GIS errors only) | 1 | DONE |
-| 8.4 | Implement export logger | 1 | TODO |
+| 8.4 | Implement export logger | 1 | DONE |
 | 8.5 | Implement task summary reporter (completion stats) | 2 | DONE |
-| 8.6 | Implement log rotation and max size limits | 1 | TODO |
+| 8.6 | Implement log rotation and max size limits | 1 | DONE |
 | 8.7 | Implement user-friendly error messages (Russian) | 2 | DONE |
 
 ### EPIC-9: Build & Distribution
@@ -165,8 +165,8 @@
 |---|------|-------|--------|
 | 9.1 | Write PyInstaller spec file + build script | 3 | DONE |
 | 9.2 | Configure PyInstaller hooks for PySide6, Playwright/Selenium | 3 | DONE |
-| 9.3 | Add application icon and Windows metadata | 1 | TODO |
-| 9.4 | Implement city/rubric directory update mechanism | 3 | TODO |
+| 9.3 | Add application icon and Windows metadata | 1 | DONE |
+| 9.4 | Implement city/rubric directory update mechanism | 3 | DONE |
 | 9.5 | Write user manual (Russian) | 4 | TODO |
 | 9.6 | Write README in Russian | 1 | TODO |
 | 9.7 | Create release archive with checksum | 1 | TODO |

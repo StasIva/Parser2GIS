@@ -20,7 +20,6 @@ Assumptions:
 Known limitations:
     - Playwright browser automation is NOT bundled (EPIC-9.2).
     - GUI module (PySide6) requires a display server at runtime.
-    - No application icon or Windows metadata (EPIC-9.3).
     - No installer or Windows code signing (post-MVP).
     - Build tested on Linux; Windows cross-build not supported.
     - Reproducibility relies on PYTHONHASHSEED=0; exact byte-level
@@ -92,8 +91,49 @@ def clean() -> None:
         _print_step(f"  Removed {p}")
 
 
+def compile_resources() -> None:
+    if platform.system() != "Windows":
+        _print_step("Skipping Windows resource compilation (not on Windows)")
+        return
+
+    rc_path = PROJECT_ROOT / "parser2gis" / "assets" / "parser2gis.rc"
+    res_path = PROJECT_ROOT / "parser2gis" / "assets" / "parser2gis.res"
+    if not rc_path.exists():
+        _print_step("Windows resource file not found, skipping")
+        return
+
+    _print_step("Compiling Windows resources...")
+    result = subprocess.run(
+        ["windres", str(rc_path), "-O", "coff", "-o", str(res_path)],
+        cwd=str(PROJECT_ROOT),
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        print("Warning: windres failed (install MinGW or MSVC tools)", file=sys.stderr)
+        print(result.stderr, file=sys.stderr)
+    else:
+        _print_step(f"Compiled {res_path}")
+
+
+def generate_icons() -> None:
+    _print_step("Generating application icons...")
+    gen_script = PROJECT_ROOT / "scripts" / "generate_icon.py"
+    if gen_script.exists():
+        result = subprocess.run(
+            [sys.executable, str(gen_script)],
+            cwd=str(PROJECT_ROOT),
+            capture_output=True, text=True,
+        )
+        print(result.stdout, end="")
+        if result.returncode != 0:
+            print(result.stderr, file=sys.stderr)
+            print("Icon generation failed (non-fatal)", file=sys.stderr)
+
+
 def build() -> None:
     _print_step("Starting reproducible build...")
+    generate_icons()
 
     env = os.environ.copy()
     env["PYTHONHASHSEED"] = "0"
@@ -102,18 +142,20 @@ def build() -> None:
     if platform.system() == "Windows":
         env["PYINSTALLER_DETERMINISTIC"] = "1"
 
+    compile_resources()
+
     result = subprocess.run(
-        [sys.executable, "-m", "PyInstaller", str(SPEC_FILE), "--noconfirm", "--log-level=INFO"],
+        ["pyinstaller", str(SPEC_FILE), "--noconfirm"],
         cwd=str(PROJECT_ROOT),
         capture_output=True,
         text=True,
         env=env,
     )
-    print(result.stdout)
     if result.returncode != 0:
+        print("Build failed:", file=sys.stderr)
         print(result.stderr, file=sys.stderr)
-        print("Build failed", file=sys.stderr)
         sys.exit(1)
+    _print_step("PyInstaller build completed successfully")
 
 
 def verify() -> None:

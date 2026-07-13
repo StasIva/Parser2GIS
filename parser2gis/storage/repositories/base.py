@@ -40,6 +40,7 @@ class BaseRepository:
 
     @classmethod
     def delete_by_id(cls, record_id: int) -> bool:
+        ConnectionManager.backup()
         conn = cls._conn()
         cursor = conn.execute(
             f"DELETE FROM {cls.table} WHERE id = ?", (record_id,)

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from parser2gis.storage.connection import ConnectionManager
 from parser2gis.storage.repositories.base import BaseRepository
 
 
@@ -30,6 +31,7 @@ class ContactRepo(BaseRepository):
 
     @classmethod
     def delete_by_organization(cls, organization_id: int) -> int:
+        ConnectionManager.backup()
         conn = cls._conn()
         cursor = conn.execute(
             "DELETE FROM contacts WHERE organization_id = ?", (organization_id,)

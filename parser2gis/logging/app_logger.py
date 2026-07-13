@@ -4,6 +4,8 @@ import logging
 import sys
 from pathlib import Path
 
+from parser2gis.logging.log_rotation import make_rotating_file_handler
+
 
 class AppLogger:
     _logger: logging.Logger | None = None
@@ -17,8 +19,8 @@ class AppLogger:
             logger = logging.getLogger("parser2gis")
             logger.setLevel(logging.DEBUG)
 
-            file_handler = logging.FileHandler(
-                str(log_dir / "app.log"), encoding="utf-8", mode="a"
+            file_handler = make_rotating_file_handler(
+                str(log_dir / "app.log"), encoding="utf-8",
             )
             file_handler.setLevel(logging.DEBUG)
             file_formatter = logging.Formatter(
@@ -41,20 +43,20 @@ class AppLogger:
 
     @classmethod
     def debug(cls, message: str) -> None:
-        cls._get().debug(message)
+        cls._ensure().debug(message)
 
     @classmethod
     def info(cls, message: str) -> None:
-        cls._get().info(message)
+        cls._ensure().info(message)
 
     @classmethod
     def warning(cls, message: str) -> None:
-        cls._get().warning(message)
+        cls._ensure().warning(message)
 
     @classmethod
     def error(cls, message: str) -> None:
-        cls._get().error(message)
+        cls._ensure().error(message)
 
     @classmethod
     def exception(cls, message: str) -> None:
-        cls._get().exception(message)
+        cls._ensure().exception(message)

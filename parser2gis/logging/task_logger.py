@@ -3,6 +3,8 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
+from parser2gis.logging.log_rotation import make_rotating_file_handler
+
 
 class TaskLogger:
     _loggers: dict[int, logging.Logger] = {}
@@ -16,8 +18,8 @@ class TaskLogger:
             logger = logging.getLogger(f"parser2gis.task.{task_id}")
             logger.setLevel(logging.DEBUG)
 
-            handler = logging.FileHandler(
-                str(log_dir / f"task_{task_id}.log"), encoding="utf-8", mode="a"
+            handler = make_rotating_file_handler(
+                str(log_dir / f"task_{task_id}.log"), encoding="utf-8",
             )
             handler.setLevel(logging.DEBUG)
             formatter = logging.Formatter(

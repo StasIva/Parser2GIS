@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from typing import Any
 
+from pathlib import Path
+
 from PySide6.QtCore import QSize
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QTableView, QToolBar, QStatusBar, QPushButton, QLabel,
@@ -14,6 +17,7 @@ from parser2gis.app_gui.dialogs.city_rubric_dialog import CityRubricDialog
 from parser2gis.app_gui.dialogs.task_name_dialog import TaskNameDialog
 from parser2gis.app_gui.dialogs.export_dialog import ExportDialog
 from parser2gis.app_gui.dialogs.settings_dialog import SettingsDialog
+from parser2gis.app_gui.dialogs.update_directory_dialog import UpdateDirectoryDialog
 from parser2gis.app_gui.models.task_table_model import TaskTableModel
 from parser2gis.app_gui.widgets.progress_delegate import ProgressDelegate
 from parser2gis.settings.settings import load_settings
@@ -31,6 +35,10 @@ class MainWindow(QMainWindow):
     def _setup_ui(self) -> None:
         self.setWindowTitle("2GIS Parser")
         self.resize(self._settings.ui.window_width, self._settings.ui.window_height)
+
+        icon_path = Path(__file__).resolve().parent.parent.parent / "assets" / "icon.png"
+        if icon_path.exists():
+            self.setWindowIcon(QIcon(str(icon_path)))
 
         central = QWidget()
         self.setCentralWidget(central)
@@ -56,11 +64,12 @@ class MainWindow(QMainWindow):
         self._start_btn = QPushButton("Старт")
         self._stop_btn = QPushButton("Стоп")
         self._export_btn = QPushButton("Экспорт")
+        self._update_dir_btn = QPushButton("Обновить справочник")
         self._settings_btn = QPushButton("Настройки")
 
         btn_style = "QPushButton { padding: 6px 12px; }"
         for btn in (self._create_btn, self._start_btn, self._stop_btn,
-                     self._export_btn, self._settings_btn):
+                     self._export_btn, self._update_dir_btn, self._settings_btn):
             btn.setStyleSheet(btn_style)
             self._toolbar.addWidget(btn)
 
@@ -70,6 +79,7 @@ class MainWindow(QMainWindow):
         self._start_btn.clicked.connect(self._on_start)
         self._stop_btn.clicked.connect(self._on_stop)
         self._export_btn.clicked.connect(self._on_export)
+        self._update_dir_btn.clicked.connect(self._on_update_directory)
         self._settings_btn.clicked.connect(self._on_settings)
 
     def _refresh_tasks(self) -> None:
@@ -116,6 +126,11 @@ class MainWindow(QMainWindow):
         dialog = ExportDialog(self)
         if dialog.exec() == ExportDialog.Accepted:
             self._status_bar.showMessage("Экспорт завершён")
+
+    def _on_update_directory(self) -> None:
+        dialog = UpdateDirectoryDialog(self)
+        dialog.exec()
+        self._refresh_tasks()
 
     def _on_settings(self) -> None:
         dialog = SettingsDialog(self._settings, self)
