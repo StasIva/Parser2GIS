@@ -53,4 +53,28 @@ Added a reproducible PyInstaller build pipeline for Parser2GIS.
 
 ---
 
+## v1.2 — App Icon, Windows Metadata & Directory Update
+
+### Added
+
+- Application icon: `app_icon.ico`, `icon.ico`, PNGs for all sizes, SVG source
+- `scripts/generate_icon.py` — SVG-to-ICO/PNG generation (rsvg-convert or Pillow fallback)
+- `version.rc` — Windows VERSIONINFO with IvaStas company metadata
+- `parser2gis.manifest` — Windows compatibility manifest
+- `DirectoryUpdateService` — city/rubric directory update from 2GIS API
+- `update-directory` CLI command and GUI dialog (Russian localization)
+- `.github/workflows/build-windows.yml` — automated Windows CI build
+
+### Changed
+
+- `scripts/build.py` — calls `generate_icons()` and `compile_resources()` before PyInstaller
+- `parser2gis.spec` — bundles assets, sets icon and version metadata
+- `DirectoryUpdateService` — all public methods return strongly-typed `DirectoryUpdateResult` (R-013)
+
+### Removed
+
+- `directory_updater.py` — duplicate code removed (R-017)
+
+---
+
 Future changes to the engineering process should be documented in this file.
