@@ -1,22 +1,24 @@
 from __future__ import annotations
 
-from typing import Any
-
 from pathlib import Path
 
-from PySide6.QtCore import QSize
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QTableView, QToolBar, QStatusBar, QPushButton, QLabel,
-    QMessageBox,
+    QLabel,
+    QMainWindow,
+    QPushButton,
+    QStatusBar,
+    QTableView,
+    QToolBar,
+    QVBoxLayout,
+    QWidget,
 )
 
 from parser2gis.app_gui.controllers.app_controller import AppController
 from parser2gis.app_gui.dialogs.city_rubric_dialog import CityRubricDialog
-from parser2gis.app_gui.dialogs.task_name_dialog import TaskNameDialog
 from parser2gis.app_gui.dialogs.export_dialog import ExportDialog
 from parser2gis.app_gui.dialogs.settings_dialog import SettingsDialog
+from parser2gis.app_gui.dialogs.task_name_dialog import TaskNameDialog
 from parser2gis.app_gui.dialogs.update_directory_dialog import UpdateDirectoryDialog
 from parser2gis.app_gui.models.task_table_model import TaskTableModel
 from parser2gis.app_gui.widgets.progress_delegate import ProgressDelegate
@@ -68,8 +70,14 @@ class MainWindow(QMainWindow):
         self._settings_btn = QPushButton("Настройки")
 
         btn_style = "QPushButton { padding: 6px 12px; }"
-        for btn in (self._create_btn, self._start_btn, self._stop_btn,
-                     self._export_btn, self._update_dir_btn, self._settings_btn):
+        for btn in (
+            self._create_btn,
+            self._start_btn,
+            self._stop_btn,
+            self._export_btn,
+            self._update_dir_btn,
+            self._settings_btn,
+        ):
             btn.setStyleSheet(btn_style)
             self._toolbar.addWidget(btn)
 
@@ -140,5 +148,6 @@ class MainWindow(QMainWindow):
         self._settings.ui.window_width = self.width()
         self._settings.ui.window_height = self.height()
         from parser2gis.settings.settings import SettingsManager
+
         SettingsManager.save(self._settings)
         super().closeEvent(event)

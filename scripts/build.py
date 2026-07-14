@@ -218,10 +218,30 @@ def verify() -> None:
         _print_step(f"Verification PASSED ({file_count} files in {app_dir})")
 
 
+def package() -> None:
+    _print_step("Packaging release archive...")
+    result = subprocess.run(
+        [sys.executable, str(PROJECT_ROOT / "scripts" / "package_release.py")],
+        cwd=str(PROJECT_ROOT),
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        print("Packaging failed:", file=sys.stderr)
+        print(result.stderr, file=sys.stderr)
+        sys.exit(1)
+    for line in result.stdout.strip().splitlines():
+        print(f"  {line}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Parser2GIS build script")
     parser.add_argument("--clean", action="store_true", help="Clean build artifacts")
     parser.add_argument("--verify", action="store_true", help="Verify existing build")
+    parser.add_argument("--package", action="store_true", default=True,
+                        help="Create release archive after build (default: on)")
+    parser.add_argument("--skip-package", action="store_true",
+                        help="Skip release archive creation")
     args = parser.parse_args()
 
     if args.clean:
@@ -236,6 +256,12 @@ def main() -> None:
     clean()
     build()
     verify()
+
+    if args.skip_package:
+        _print_step("Skipping release archive (--skip-package)")
+    elif args.package:
+        package()
+
     _print_step("Build complete.")
 
 
