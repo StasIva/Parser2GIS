@@ -54,9 +54,13 @@ jobs:
       - name: Embed Windows resources
         shell: pwsh
         run: |
-          if (Test-Path "parser2gis/assets/parser2gis.rc") {
-            & "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\*\bin\Hostx64\x64\rc.exe" /fo parser2gis/assets/parser2gis.res parser2gis/assets/parser2gis.rc
-            copy parser2gis/assets/parser2gis.res dist/parser2gis/
+          $rcPath = Get-ChildItem "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\MSVC\*\bin\Hostx64\x64\rc.exe" -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
+          if ($rcPath -and (Test-Path "parser2gis/assets/parser2gis.rc")) {
+            & $rcPath /fo parser2gis/assets/parser2gis.res parser2gis/assets/parser2gis.rc
+            Copy-Item parser2gis/assets/parser2gis.res dist/parser2gis/ -ErrorAction SilentlyContinue
+            Write-Host "Windows resources embedded successfully"
+          } else {
+            Write-Host "RC compiler not found or .rc file missing - skipping resource embedding"
           }
 
       - name: Upload build artifact
