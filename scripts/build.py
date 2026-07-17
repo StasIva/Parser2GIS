@@ -153,6 +153,9 @@ def build() -> None:
     )
     if result.returncode != 0:
         print("Build failed:", file=sys.stderr)
+        print("--- stdout ---", file=sys.stderr)
+        print(result.stdout, file=sys.stderr)
+        print("--- stderr ---", file=sys.stderr)
         print(result.stderr, file=sys.stderr)
         sys.exit(1)
     _print_step("PyInstaller build completed successfully")
