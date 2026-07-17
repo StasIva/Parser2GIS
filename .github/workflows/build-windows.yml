@@ -109,7 +109,8 @@ jobs:
               Write-Host "STDOUT: [$out]"
               Write-Host "STDERR:"
               Write-Host "$err"
-              throw "Exit code $rc for: parser2gis.exe $ArgumentList. STDERR last line: $($err -split \"`n\" | Select-Object -Last 1)"
+              $errLastLine = ($err -split "`n") | Select-Object -Last 1
+              throw "Exit code $rc for: parser2gis.exe $ArgumentList. Last stderr line: $errLastLine"
             }
             return $out
           }
