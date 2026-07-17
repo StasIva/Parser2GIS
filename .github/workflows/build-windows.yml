@@ -97,8 +97,7 @@ jobs:
 
           function Run-Exe {
             param([string[]]$ArgumentList)
-            $argStr = $ArgumentList -join ' '
-            $p = Start-Process -FilePath $exePath -ArgumentList $argStr -NoNewWindow -Wait -PassThru -RedirectStandardOutput "$tmpDir\stdout.txt" -RedirectStandardError "$tmpDir\stderr.txt"
+            $p = Start-Process -FilePath $exePath -ArgumentList $ArgumentList -NoNewWindow -Wait -PassThru -RedirectStandardOutput "$tmpDir\stdout.txt" -RedirectStandardError "$tmpDir\stderr.txt"
             $rc = $p.ExitCode
             $out = Get-Content "$tmpDir\stdout.txt" -Raw
             $err = Get-Content "$tmpDir\stderr.txt" -Raw
