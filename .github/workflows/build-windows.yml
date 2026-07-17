@@ -32,6 +32,18 @@ jobs:
       - name: Build with PyInstaller
         id: build
         run: python scripts/build.py
+        continue-on-error: true
+
+      - name: Upload build log artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pyinstaller-output
+          path: pyinstaller_output.log
+
+      - name: Check build status
+        if: steps.build.outcome == 'failure'
+        run: exit 1
 
       - name: Embed Windows resources
         shell: pwsh

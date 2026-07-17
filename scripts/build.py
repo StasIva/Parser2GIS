@@ -144,19 +144,29 @@ def build() -> None:
 
     compile_resources()
 
-    log_path = PROJECT_ROOT / "pyinstaller_script.log"
+    log_path = PROJECT_ROOT / "pyinstaller_output.log"
     _print_step("Running: pyinstaller " + str(SPEC_FILE) + " --noconfirm")
-    with open(log_path, "w", encoding="utf-8") as log_f:
+    with open(log_path, "wb") as log_f:
         result = subprocess.run(
             ["pyinstaller", str(SPEC_FILE), "--noconfirm"],
             cwd=str(PROJECT_ROOT),
-            stdout=subprocess.PIPE,
+            stdout=log_f,
             stderr=subprocess.STDOUT,
-            text=True,
             env=env,
         )
-        log_f.write(result.stdout)
     if result.returncode != 0:
+        with open(log_path) as f:
+            output = f.read()
+        # Emit as GitHub Actions annotations (visible in summary)
+        for line in output.splitlines():
+            line = line.rstrip()
+            if any(kw in line for kw in ("Error:", "error:", "Fatal:", "failed", "FAILED", "Traceback", "Cannot", "No module")):
+                escaped = line.replace("%", "%25").replace("\n", "%0A").replace("\r", "%0D")
+                print(f"::error::{escaped}")
+        # Also dump full output as group
+        print("::group::PyInstaller build output")
+        print(output)
+        print("::endgroup::")
         print("Build failed with exit code " + str(result.returncode), file=sys.stderr)
         sys.exit(1)
     _print_step("PyInstaller build completed successfully")
