@@ -58,6 +58,7 @@ jobs:
           name: build-logs
           path: |
             pyinstaller_direct.log
+            pyinstaller_script.log
             all_build_logs.txt
 
       - name: Fail workflow if build failed

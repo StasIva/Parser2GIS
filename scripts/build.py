@@ -256,9 +256,28 @@ def main() -> None:
         verify()
         return
 
-    check_environment()
+    log_path = PROJECT_ROOT / "pyinstaller_script.log"
+    with open(log_path, "w", encoding="utf-8") as log_f:
+        log_f.write("=== Build script log ===\n")
+        log_f.write(f"Python: {sys.version}\n")
+        log_f.write(f"Platform: {platform.platform()}\n")
+
+    try:
+        check_environment()
+    except Exception as e:
+        with open(log_path, "a", encoding="utf-8") as log_f:
+            log_f.write(f"check_environment FAILED: {e}\n")
+        raise
+
     clean()
-    build()
+
+    try:
+        build()
+    except Exception as e:
+        with open(log_path, "a", encoding="utf-8") as log_f:
+            log_f.write(f"build FAILED: {e}\n")
+        raise
+
     verify()
 
     if args.skip_package:
