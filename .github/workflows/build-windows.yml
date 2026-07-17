@@ -114,19 +114,26 @@ jobs:
           # 2. seed (initializes DB, runs migrations, inserts seed data)
           Write-Host "=== 2. seed ==="
           $s = Run-Exe @("seed")
-          if ($s -notmatch "seeded") { throw "Seed output unexpected" }
+          Write-Host "Seed stdout: [$s]"
+          $hexBytes = [System.Text.Encoding]::UTF8.GetBytes($s)
+          Write-Host "Seed stdout hex: $($hexBytes -join ' ')"
+          if ($s -notmatch "seeded") { throw "Seed output unexpected. Expected 'seeded' in: [$s]" }
 
           # 3. list cities (expect 3 seeded cities)
           Write-Host "=== 3. list cities ==="
           $c = Run-Exe @("list", "cities")
-          if ($c -notmatch "Москва") { throw "Expected Москва in city list" }
-          if ($c -notmatch "Санкт-Петербург") { throw "Expected Санкт-Петербург in city list" }
-          if ($c -notmatch "Новосибирск") { throw "Expected Новосибирск in city list" }
+          Write-Host "Cities stdout: [$c]"
+          $hexBytesC = [System.Text.Encoding]::UTF8.GetBytes($c)
+          Write-Host "Cities stdout hex: $($hexBytesC -join ' ')"
+          if ($c -notmatch "Москва") { throw "Expected Москва in city list. Got: [$c]" }
+          if ($c -notmatch "Санкт-Петербург") { throw "Expected Санкт-Петербург in city list. Got: [$c]" }
+          if ($c -notmatch "Новосибирск") { throw "Expected Новосибирск in city list. Got: [$c]" }
 
           # 4. list rubrics (expect 10 seeded rubrics)
           Write-Host "=== 4. list rubrics ==="
           $r = Run-Exe @("list", "rubrics")
-          if ($r -notmatch "Авто") { throw "Expected rubric in list" }
+          Write-Host "Rubrics stdout: [$r]"
+          if ($r -notmatch "Авто") { throw "Expected rubric in list. Got: [$r]" }
 
           # 5. list tasks (expect empty, but no crash)
           Write-Host "=== 5. list tasks ==="
