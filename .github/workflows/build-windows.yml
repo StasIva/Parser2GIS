@@ -30,11 +30,18 @@ jobs:
           pip install -e .
 
       - name: Build with PyInstaller
+        id: build
         run: python scripts/build.py 2>&1
+        continue-on-error: true
 
-      - name: Debug - direct pyinstaller (skipped if build succeeded)
-        if: failure()
+      - name: Debug - direct pyinstaller
+        if: steps.build.outcome == 'failure'
         run: pyinstaller parser2gis.spec --noconfirm 2>&1
+        continue-on-error: true
+
+      - name: Fail workflow if build failed
+        if: steps.build.outcome == 'failure'
+        run: exit 1
 
       - name: Embed Windows resources
         shell: pwsh
