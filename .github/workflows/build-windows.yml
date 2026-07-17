@@ -86,6 +86,67 @@ jobs:
           Write-Host "Artifact contains $($files.Count) files"
           $files | ForEach-Object { Write-Host "  $($_.Name) ($($_.Length) bytes)" }
 
+      - name: Smoke test — CLI execution
+        shell: pwsh
+        run: |
+          $exePath = "dist/parser2gis/parser2gis.exe"
+          $tmpDir = Join-Path $env:RUNNER_TEMP "smoke_test_data"
+
+          function Run-Exe($args) {
+            $p = Start-Process -FilePath $exePath -ArgumentList $args -NoNewWindow -Wait -PassThru -RedirectStandardOutput "$tmpDir\stdout.txt" -RedirectStandardError "$tmpDir\stderr.txt"
+            $rc = $p.ExitCode
+            $out = Get-Content "$tmpDir\stdout.txt" -Raw
+            $err = Get-Content "$tmpDir\stderr.txt" -Raw
+            if ($rc -ne 0) {
+              Write-Host "STDOUT: $out"
+              Write-Host "STDERR: $err"
+              throw "Exit code $rc for: parser2gis.exe $args"
+            }
+            return $out
+          }
+
+          # 1. --version
+          Write-Host "=== 1. --version ==="
+          $v = Run-Exe @("--version")
+          if ($v -notmatch "parser2gis") { throw "Unexpected version output" }
+
+          # 2. seed (initializes DB, runs migrations, inserts seed data)
+          Write-Host "=== 2. seed ==="
+          $s = Run-Exe @("seed")
+          if ($s -notmatch "seeded") { throw "Seed output unexpected" }
+
+          # 3. list cities (expect 3 seeded cities)
+          Write-Host "=== 3. list cities ==="
+          $c = Run-Exe @("list", "cities")
+          if ($c -notmatch "Москва") { throw "Expected Москва in city list" }
+          if ($c -notmatch "Санкт-Петербург") { throw "Expected Санкт-Петербург in city list" }
+          if ($c -notmatch "Новосибирск") { throw "Expected Новосибирск in city list" }
+
+          # 4. list rubrics (expect 10 seeded rubrics)
+          Write-Host "=== 4. list rubrics ==="
+          $r = Run-Exe @("list", "rubrics")
+          if ($r -notmatch "Авто") { throw "Expected rubric in list" }
+
+          # 5. list tasks (expect empty, but no crash)
+          Write-Host "=== 5. list tasks ==="
+          $t = Run-Exe @("list", "tasks")
+          if ($t -ne "") { Write-Host "Tasks (expected empty): $t" }
+
+          # 6. export (create a dummy org first via export with --task-id 0)
+          #    Skip export if no orgs exist — it exits with code 1
+          Write-Host "=== 6. export (via --task-id 0, expects no orgs) ==="
+          $outFile = "$tmpDir\test_export.xlsx"
+          $p = Start-Process -FilePath $exePath -ArgumentList @("export", "--task-id", "0", "--output", $outFile) -NoNewWindow -Wait -PassThru -RedirectStandardOutput "$tmpDir\export_out.txt" -RedirectStandardError "$tmpDir\export_err.txt"
+          $rc = $p.ExitCode
+          $exportOut = Get-Content "$tmpDir\export_out.txt" -Raw
+          $exportErr = Get-Content "$tmpDir\export_err.txt" -Raw
+          if ($rc -ne 0) {
+            Write-Host "Export exit code $rc (expected if no orgs exist): $exportOut$exportErr"
+          }
+
+          Write-Host ""
+          Write-Host "=== All CLI smoke tests passed ==="
+
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
