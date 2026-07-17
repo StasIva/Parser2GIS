@@ -29,18 +29,39 @@ jobs:
           pip install pyinstaller>=6.0
           pip install -e .
 
-      - name: Build with PyInstaller
-        id: build
-        run: python scripts/build.py 2>&1
+      - name: Build with PyInstaller (via script)
+        id: build_script
+        run: python scripts/build.py
         continue-on-error: true
 
       - name: Debug - direct pyinstaller
-        if: steps.build.outcome == 'failure'
-        run: pyinstaller parser2gis.spec --noconfirm 2>&1
+        if: always()
+        run: |
+          pyinstaller parser2gis.spec --noconfirm > pyinstaller_direct.log 2>&1
+          type pyinstaller_direct.log
         continue-on-error: true
 
+      - name: Collect build logs
+        if: always()
+        run: |
+          echo "=== build_script outcome: ${{ steps.build_script.outcome }} ===" > all_build_logs.txt
+          if exist dist\* ( dir /s dist >> all_build_logs.txt 2>&1 )
+          if exist build\* ( dir /s build >> all_build_logs.txt 2>&1 )
+          if exist pyinstaller_direct.log ( type pyinstaller_direct.log >> all_build_logs.txt 2>&1 )
+        shell: cmd
+        continue-on-error: true
+
+      - name: Upload log artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: |
+            pyinstaller_direct.log
+            all_build_logs.txt
+
       - name: Fail workflow if build failed
-        if: steps.build.outcome == 'failure'
+        if: steps.build_script.outcome == 'failure'
         run: exit 1
 
       - name: Embed Windows resources

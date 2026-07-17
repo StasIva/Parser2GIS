@@ -144,14 +144,18 @@ def build() -> None:
 
     compile_resources()
 
+    log_path = PROJECT_ROOT / "pyinstaller_script.log"
     _print_step("Running: pyinstaller " + str(SPEC_FILE) + " --noconfirm")
-    result = subprocess.run(
-        ["pyinstaller", str(SPEC_FILE), "--noconfirm"],
-        cwd=str(PROJECT_ROOT),
-        capture_output=False,
-        text=True,
-        env=env,
-    )
+    with open(log_path, "w", encoding="utf-8") as log_f:
+        result = subprocess.run(
+            ["pyinstaller", str(SPEC_FILE), "--noconfirm"],
+            cwd=str(PROJECT_ROOT),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            env=env,
+        )
+        log_f.write(result.stdout)
     if result.returncode != 0:
         print("Build failed with exit code " + str(result.returncode), file=sys.stderr)
         sys.exit(1)
