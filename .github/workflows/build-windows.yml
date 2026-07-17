@@ -29,20 +29,35 @@ jobs:
           pip install pyinstaller>=6.0
           pip install -e .
 
+      - name: Quick sanity check
+        run: |
+          python -c "
+import sys
+print(f'Python {sys.version}')
+import pyinstaller; print(f'PyInstaller OK')
+import parser2gis; print(f'parser2gis OK')
+import httpx; print(f'httpx OK')
+import openpyxl; print(f'openpyxl OK')
+import pydantic; print(f'pydantic OK')
+try:
+    from PySide6 import QtWidgets; print('PySide6.QtWidgets OK')
+except Exception as e:
+    print(f'PySide6 import failed: {e}')
+"
+
       - name: Clean previous build artifacts
         run: |
           if exist dist ( rmdir /s /q dist )
           if exist build ( rmdir /s /q build )
         shell: cmd
 
-      - name: Run pyinstaller directly (debug)
+      - name: Run pyinstaller
         id: build
         shell: cmd
         run: |
           pyinstaller parser2gis.spec --noconfirm --log-level DEBUG > pyinstaller_debug.log 2>&1
-          set EXITCODE=%ERRORLEVEL%
           type pyinstaller_debug.log
-          if %EXITCODE% NEQ 0 exit /b %EXITCODE%
+          if %ERRORLEVEL% NEQ 0 exit /b %ERRORLEVEL%
         continue-on-error: true
 
       - name: Upload debug log
