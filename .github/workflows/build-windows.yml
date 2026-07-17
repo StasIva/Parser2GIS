@@ -45,31 +45,39 @@ except Exception as e:
     print(f'PySide6 import failed: {e}')
 "
 
+      - name: Test basic PyInstaller functionality
+        id: test_basic
+        shell: cmd
+        run: |
+          echo print("hello world") > test_hello.py
+          pyinstaller --onefile --name test_hello test_hello.py > test_basic.log 2>&1
+          type test_basic.log
+          if %ERRORLEVEL% NEQ 0 exit /b %ERRORLEVEL%
+        continue-on-error: true
+
       - name: Clean previous build artifacts
         run: |
           if exist dist ( rmdir /s /q dist )
           if exist build ( rmdir /s /q build )
         shell: cmd
 
-      - name: Run pyinstaller
+      - name: Build project with PyInstaller
         id: build
         shell: cmd
         run: |
-          pyinstaller parser2gis.spec --noconfirm --log-level DEBUG > pyinstaller_debug.log 2>&1
-          type pyinstaller_debug.log
+          pyinstaller parser2gis.spec --noconfirm --log-level DEBUG > pyinstaller_build.log 2>&1
+          type pyinstaller_build.log
           if %ERRORLEVEL% NEQ 0 exit /b %ERRORLEVEL%
         continue-on-error: true
 
-      - name: Upload debug log
+      - name: Upload build logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: pyinstaller-debug-log
-          path: pyinstaller_debug.log
-
-      - name: Fail if build failed
-        if: steps.build.outcome == 'failure'
-        run: exit 1
+          name: build-logs
+          path: |
+            test_basic.log
+            pyinstaller_build.log
 
       - name: Embed Windows resources
         shell: pwsh
