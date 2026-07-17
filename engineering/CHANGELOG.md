@@ -77,4 +77,23 @@ Added a reproducible PyInstaller build pipeline for Parser2GIS.
 
 ---
 
+---
+
+## v1.3 — Windows CI Smoke Test with CLI Execution
+
+### Added
+
+- Enhanced CI smoke test to actually execute the built `parser2gis.exe` with CLI commands:
+  - `--version` — verifies the binary starts and exits cleanly
+  - `seed` — verifies database initialization, migrations, and seed data insertion
+  - `list cities` — verifies 3 seeded cities are queryable
+  - `list rubrics` — verifies 10 seeded rubrics are queryable
+  - `list tasks` — verifies empty result does not crash
+  - `export` — verifies graceful handling when no organizations exist
+
+### Notes
+
+- GUI functionality (main window, dialogs, full workflow) still requires manual testing on a real Windows environment with a display server.
+- CLI-only smoke tests cover non-GUI startup, database layer, and export pipeline.
+
 Future changes to the engineering process should be documented in this file.

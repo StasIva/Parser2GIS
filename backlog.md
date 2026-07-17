@@ -214,7 +214,7 @@ EPIC-7 (Export) — Tasks 7.1–7.8
 EPIC-2 (2GIS Source) — Task 2.10 (browser fallback)
 
 ### Stage 5 — REMAINING
-EPIC-9 (Build) — Tasks 9.1–9.9a (Linux smoke test done; Windows CI tracked as 9.8a)
+EPIC-9 (Build) — Tasks 9.5, 9.6, 9.7, 9.9 (9.1–9.4, 9.8, 9.8a done)
 EPIC-5 (Storage) — Tasks 5.7, 5.8
 EPIC-8 (Logging) — Tasks 8.4, 8.6
 
