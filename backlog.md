@@ -171,7 +171,7 @@
 | 9.6 | Write README in Russian | 1 | TODO |
 | 9.7 | Create release archive with checksum | 1 | TODO |
 | 9.8 | Smoke test on Linux VM | 2 | DONE |
-| 9.8a | Windows smoke test via CI (GitHub Actions) | 2 | TODO |
+| 9.8a | Windows smoke test via CI (GitHub Actions) | 2 | DONE |
 | 9.9 | Submit to Windows Defender for false positive mitigation | 2 | TODO |
 
 ### EPIC-10: CLI & API (Post-MVP)
