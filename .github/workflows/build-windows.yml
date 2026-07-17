@@ -98,30 +98,20 @@ jobs:
           function Run-Exe {
             param([string[]]$ArgumentList)
             $argInfo = $ArgumentList -join '|'
-            Write-Host "::notice title=Run-Exe::$argInfo"
-            try {
-              $p = Start-Process -FilePath $exePath -ArgumentList $ArgumentList -NoNewWindow -Wait -PassThru -RedirectStandardOutput "$tmpDir\stdout.txt" -RedirectStandardError "$tmpDir\stderr.txt" -ErrorAction Stop
-              $rc = $p.ExitCode
-              $out = [System.IO.File]::ReadAllText("$tmpDir\stdout.txt", [System.Text.Encoding]::UTF8)
-              $err = [System.IO.File]::ReadAllText("$tmpDir\stderr.txt", [System.Text.Encoding]::UTF8)
-              Write-Host "::notice title=Run-Exe result::$argInfo exit=$rc out_len=$($out.Length) err_len=$($err.Length)"
-              if ($rc -ne 0) {
-                Write-Host "STDOUT: $out"
-                Write-Host "STDERR: $err"
-                # Emit stderr in chunks via notices so we see the traceback
-                $errChunks = $err -split "`n"
-                $chunkIdx = 0
-                foreach ($chunk in $errChunks) {
-                  Write-Host "::notice title=Run-Exe stderr $argInfo #$chunkIdx::$chunk"
-                  $chunkIdx++
-                }
-                throw "Exit code $rc for: parser2gis.exe $ArgumentList"
-              }
-              return $out
-            } catch {
-              Write-Host "::error title=Run-Exe exception::$argInfo $($_.Exception.Message)"
-              throw
+            $p = Start-Process -FilePath $exePath -ArgumentList $ArgumentList -NoNewWindow -Wait -PassThru -RedirectStandardOutput "$tmpDir\stdout.txt" -RedirectStandardError "$tmpDir\stderr.txt"
+            $rc = $p.ExitCode
+            $out = ""
+            $err = ""
+            if (Test-Path "$tmpDir\stdout.txt") { $out = [System.IO.File]::ReadAllText("$tmpDir\stdout.txt", [System.Text.Encoding]::UTF8) }
+            if (Test-Path "$tmpDir\stderr.txt") { $err = [System.IO.File]::ReadAllText("$tmpDir\stderr.txt", [System.Text.Encoding]::UTF8) }
+            if ($rc -ne 0) {
+              Write-Host "::notice title=Run-Exe failed::$argInfo exit=$rc"
+              Write-Host "STDOUT: [$out]"
+              Write-Host "STDERR:"
+              Write-Host "$err"
+              throw "Exit code $rc for: parser2gis.exe $ArgumentList. STDERR last line: $($err -split \"`n\" | Select-Object -Last 1)"
             }
+            return $out
           }
 
           # 1. --version
