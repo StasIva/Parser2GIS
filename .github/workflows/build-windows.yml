@@ -119,14 +119,14 @@ jobs:
 
           # 1. --version
           Write-Host "=== 1. --version ==="
-          $v = Run-Exe "--version"
+          $v = Run-Exe @("--version")
           $vOk = ($v -match "parser2gis")
           Write-Host "::notice title=Check 1 --version::$vOk :: [$v]"
           if (-not $vOk) { throw "Unexpected version output. Got: [$v]" }
 
           # 2. seed (initializes DB, runs migrations, inserts seed data)
           Write-Host "=== 2. seed ==="
-          $s = Run-Exe "seed"
+          $s = Run-Exe @("seed")
           Write-Host "Seed stdout: [$s]"
           $s | Out-File "$tmpDir\seed_stdout.txt"
           $sType = $s.GetType().Name
@@ -140,7 +140,7 @@ jobs:
 
           # 3. list cities (expect 3 seeded cities)
           Write-Host "=== 3. list cities ==="
-          $c = Run-Exe "list" "cities"
+          $c = Run-Exe @("list", "cities")
           Write-Host "Cities stdout: [$c]"
           $c | Out-File "$tmpDir\cities_stdout.txt"
           $hexBytesC = [System.Text.Encoding]::UTF8.GetBytes($c)
@@ -158,14 +158,14 @@ jobs:
 
           # 4. list rubrics (expect 10 seeded rubrics)
           Write-Host "=== 4. list rubrics ==="
-          $r = Run-Exe "list" "rubrics"
+          $r = Run-Exe @("list", "rubrics")
           Write-Host "Rubrics stdout: [$r]"
           Write-Host "::notice title=Check 4 rubrics::[$r]"
           if ($r -notmatch "Авто") { throw "Expected rubric in list. Got: [$r]" }
 
           # 5. list tasks (expect empty, but no crash)
           Write-Host "=== 5. list tasks ==="
-          $t = Run-Exe "list" "tasks"
+          $t = Run-Exe @("list", "tasks")
           Write-Host "::notice title=Check 5 tasks::[$t]"
           if ($t -ne "") { Write-Host "Tasks (expected empty): $t" }
 
