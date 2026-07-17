@@ -34,9 +34,7 @@ jobs:
         id: test
         shell: pwsh
         run: |
-          $null = New-Item -Path test_hello.py -Force -Value @"
-print("hello world")
-"@
+          Set-Content -Path test_hello.py -Value 'print("hello world")'
           python -m PyInstaller --onedir --name test_hello test_hello.py 2>&1
           if ($LASTEXITCODE -ne 0) { throw "PyInstaller basic test failed" }
 
