@@ -167,9 +167,9 @@
 | 9.2 | Configure PyInstaller hooks for PySide6, Playwright/Selenium | 3 | DONE |
 | 9.3 | Add application icon and Windows metadata | 1 | DONE |
 | 9.4 | Implement city/rubric directory update mechanism | 3 | DONE |
-| 9.5 | Write user manual (Russian) | 4 | TODO |
-| 9.6 | Write README in Russian | 1 | TODO |
-| 9.7 | Create release archive with checksum | 1 | TODO |
+| 9.5 | Write user manual (Russian) | 4 | DONE |
+| 9.6 | Write README in Russian | 1 | DONE |
+| 9.7 | Create release archive with checksum | 1 | DONE |
 | 9.8 | Smoke test on Linux VM | 2 | DONE |
 | 9.8a | Windows smoke test via CI (GitHub Actions) | 2 | DONE |
 | 9.9 | Submit to Windows Defender for false positive mitigation | 2 | TODO |
@@ -214,9 +214,8 @@ EPIC-7 (Export) — Tasks 7.1–7.8
 EPIC-2 (2GIS Source) — Task 2.10 (browser fallback)
 
 ### Stage 5 — REMAINING
-EPIC-9 (Build) — Tasks 9.5, 9.6, 9.7, 9.9 (9.1–9.4, 9.8, 9.8a done)
+EPIC-9 (Build) — Task 9.9 only (9.1–9.8a all done)
 EPIC-5 (Storage) — Tasks 5.7, 5.8
-EPIC-8 (Logging) — Tasks 8.4, 8.6
 
 ### Post-MVP
 EPIC-10 (CLI/API) — Tasks 10.1–10.9
