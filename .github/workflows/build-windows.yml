@@ -115,6 +115,8 @@ jobs:
           Write-Host "=== 2. seed ==="
           $s = Run-Exe @("seed")
           Write-Host "Seed stdout: [$s]"
+          # Save for debug artifact
+          $s | Out-File "$tmpDir\seed_stdout.txt"
           $hexBytes = [System.Text.Encoding]::UTF8.GetBytes($s)
           Write-Host "Seed stdout hex: $($hexBytes -join ' ')"
           if ($s -notmatch "seeded") { throw "Seed output unexpected. Expected 'seeded' in: [$s]" }
@@ -123,6 +125,8 @@ jobs:
           Write-Host "=== 3. list cities ==="
           $c = Run-Exe @("list", "cities")
           Write-Host "Cities stdout: [$c]"
+          # Save for debug artifact
+          $c | Out-File "$tmpDir\cities_stdout.txt"
           $hexBytesC = [System.Text.Encoding]::UTF8.GetBytes($c)
           Write-Host "Cities stdout hex: $($hexBytesC -join ' ')"
           if ($c -notmatch "Москва") { throw "Expected Москва in city list. Got: [$c]" }
@@ -154,6 +158,35 @@ jobs:
 
           Write-Host ""
           Write-Host "=== All CLI smoke tests passed ==="
+
+      - name: Upload debug output (always)
+        if: always()
+        shell: pwsh
+        run: |
+          $tmpDir = Join-Path $env:RUNNER_TEMP "smoke_test_data"
+          $debugDir = "debug_output"
+          New-Item -ItemType Directory -Force -Path $debugDir | Out-Null
+          if (Test-Path "$tmpDir\stdout.txt") {
+            Copy-Item "$tmpDir\stdout.txt" "$debugDir\seed_stdout.txt"
+            $content = Get-Content "$tmpDir\stdout.txt" -Raw
+            $hex = [System.Text.Encoding]::UTF8.GetBytes($content)
+            Set-Content -Path "$debugDir\seed_stdout_hex.txt" -Value ($hex -join ' ')
+            Set-Content -Path "$debugDir\seed_stdout_repr.txt" -Value "[$content]"
+          }
+          if (Test-Path "$tmpDir\stderr.txt") {
+            Copy-Item "$tmpDir\stderr.txt" "$debugDir\seed_stderr.txt"
+          }
+          if (Test-Path "$tmpDir\cities_stdout.txt") {
+            Copy-Item "$tmpDir\cities_stdout.txt" "$debugDir\cities_stdout.txt"
+          }
+          Get-ChildItem $debugDir | ForEach-Object { Write-Host "  $($_.Name) ($($_.Length) bytes)" }
+
+      - name: Upload debug artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: parser2gis-debug
+          path: debug_output/
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
