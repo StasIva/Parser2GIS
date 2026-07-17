@@ -104,12 +104,18 @@ jobs:
               $rc = $p.ExitCode
               $out = [System.IO.File]::ReadAllText("$tmpDir\stdout.txt", [System.Text.Encoding]::UTF8)
               $err = [System.IO.File]::ReadAllText("$tmpDir\stderr.txt", [System.Text.Encoding]::UTF8)
-              $errPreview = $err.Substring(0, [Math]::Min(500, $err.Length))
-              Write-Host "::notice title=Run-Exe result::$argInfo exit=$rc out_len=$($out.Length) err_preview=$errPreview"
+              Write-Host "::notice title=Run-Exe result::$argInfo exit=$rc out_len=$($out.Length) err_len=$($err.Length)"
               if ($rc -ne 0) {
                 Write-Host "STDOUT: $out"
                 Write-Host "STDERR: $err"
-                throw "Exit code $rc for: parser2gis.exe $ArgumentList. STDERR: $errPreview"
+                # Emit stderr in chunks via notices so we see the traceback
+                $errChunks = $err -split "`n"
+                $chunkIdx = 0
+                foreach ($chunk in $errChunks) {
+                  Write-Host "::notice title=Run-Exe stderr $argInfo #$chunkIdx::$chunk"
+                  $chunkIdx++
+                }
+                throw "Exit code $rc for: parser2gis.exe $ArgumentList"
               }
               return $out
             } catch {
