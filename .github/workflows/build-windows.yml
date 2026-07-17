@@ -23,60 +23,35 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install dependencies
+      - name: Install Python deps
+        shell: pwsh
         run: |
           python -m pip install --upgrade pip
           pip install pyinstaller>=6.0
           pip install -e .
 
-      - name: Quick sanity check
-        shell: python
+      - name: Test PyInstaller (hello world)
+        id: test
+        shell: pwsh
         run: |
-          import sys
-          print(f'Python {sys.version}')
-          import pyinstaller; print(f'PyInstaller OK')
-          import parser2gis; print(f'parser2gis OK')
-          import httpx; print(f'httpx OK')
-          import openpyxl; print(f'openpyxl OK')
-          import pydantic; print(f'pydantic OK')
-          try:
-              from PySide6 import QtWidgets; print('PySide6.QtWidgets OK')
-          except Exception as e:
-              print(f'PySide6 import failed: {e}')
+          $null = New-Item -Path test_hello.py -Force -Value @"
+print("hello world")
+"@
+          python -m PyInstaller --onedir --name test_hello test_hello.py 2>&1
+          if ($LASTEXITCODE -ne 0) { throw "PyInstaller basic test failed" }
 
-      - name: Test basic PyInstaller functionality
-        id: test_basic
-        shell: cmd
+      - name: Clean
+        shell: pwsh
         run: |
-          echo print("hello world") > test_hello.py
-          pyinstaller --onefile --name test_hello test_hello.py > test_basic.log 2>&1
-          type test_basic.log
-          if %ERRORLEVEL% NEQ 0 exit /b %ERRORLEVEL%
-        continue-on-error: true
+          if (Test-Path dist) { Remove-Item -Recurse -Force dist }
+          if (Test-Path build) { Remove-Item -Recurse -Force build }
 
-      - name: Clean previous build artifacts
-        run: |
-          if exist dist ( rmdir /s /q dist )
-          if exist build ( rmdir /s /q build )
-        shell: cmd
-
-      - name: Build project with PyInstaller
+      - name: Build project
         id: build
-        shell: cmd
+        shell: pwsh
         run: |
-          pyinstaller parser2gis.spec --noconfirm --log-level DEBUG > pyinstaller_build.log 2>&1
-          type pyinstaller_build.log
-          if %ERRORLEVEL% NEQ 0 exit /b %ERRORLEVEL%
-        continue-on-error: true
-
-      - name: Upload build logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-logs
-          path: |
-            test_basic.log
-            pyinstaller_build.log
+          python -m PyInstaller parser2gis.spec --noconfirm 2>&1
+          if ($LASTEXITCODE -ne 0) { throw "Project build failed" }
 
       - name: Embed Windows resources
         shell: pwsh
