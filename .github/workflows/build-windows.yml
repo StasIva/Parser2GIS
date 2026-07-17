@@ -30,20 +30,19 @@ jobs:
           pip install -e .
 
       - name: Quick sanity check
+        shell: python
         run: |
-          python -c "
-import sys
-print(f'Python {sys.version}')
-import pyinstaller; print(f'PyInstaller OK')
-import parser2gis; print(f'parser2gis OK')
-import httpx; print(f'httpx OK')
-import openpyxl; print(f'openpyxl OK')
-import pydantic; print(f'pydantic OK')
-try:
-    from PySide6 import QtWidgets; print('PySide6.QtWidgets OK')
-except Exception as e:
-    print(f'PySide6 import failed: {e}')
-"
+          import sys
+          print(f'Python {sys.version}')
+          import pyinstaller; print(f'PyInstaller OK')
+          import parser2gis; print(f'parser2gis OK')
+          import httpx; print(f'httpx OK')
+          import openpyxl; print(f'openpyxl OK')
+          import pydantic; print(f'pydantic OK')
+          try:
+              from PySide6 import QtWidgets; print('PySide6.QtWidgets OK')
+          except Exception as e:
+              print(f'PySide6 import failed: {e}')
 
       - name: Test basic PyInstaller functionality
         id: test_basic
