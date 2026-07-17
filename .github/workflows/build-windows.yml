@@ -122,10 +122,13 @@ jobs:
           $s = Run-Exe "seed"
           Write-Host "Seed stdout: [$s]"
           $s | Out-File "$tmpDir\seed_stdout.txt"
+          $sType = $s.GetType().Name
+          $sLen = $s.Length
+          $sNull = ($s -eq $null)
           $hexBytes = [System.Text.Encoding]::UTF8.GetBytes($s)
           Write-Host "Seed stdout hex: $($hexBytes -join ' ')"
-          Write-Host "::notice title=Check 2 seed::[$s]"
-          $sOk = ($s -match "seeded")
+          $sOk = $s.ToString().Contains("seeded")
+          Write-Host "::notice title=Check 2 seed::ok=$sOk type=$sType len=$sLen isnull=$sNull"
           if (-not $sOk) { throw "Seed output unexpected. Expected 'seeded' in: [$s]" }
 
           # 3. list cities (expect 3 seeded cities)
