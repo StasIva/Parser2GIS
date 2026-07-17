@@ -44,6 +44,13 @@ jobs:
           if (Test-Path dist) { Remove-Item -Recurse -Force dist }
           if (Test-Path build) { Remove-Item -Recurse -Force build }
 
+      - name: Run unit tests
+        shell: pwsh
+        run: |
+          pip install pytest pytest-mock
+          python -m pytest tests/ -v 2>&1
+          if ($LASTEXITCODE -ne 0) { throw "Unit tests failed" }
+
       - name: Build project
         id: build
         shell: pwsh
@@ -62,6 +69,20 @@ jobs:
           } else {
             Write-Host "RC compiler not found or .rc file missing - skipping resource embedding"
           }
+
+      - name: Smoke test artifact
+        shell: pwsh
+        run: |
+          $artPath = "dist/parser2gis/"
+          if (-not (Test-Path $artPath)) { throw "Artifact directory missing" }
+          $exePath = Join-Path $artPath "parser2gis.exe"
+          if (-not (Test-Path $exePath)) { throw "Executable missing at $exePath" }
+          $size = (Get-Item $exePath).Length
+          Write-Host "parser2gis.exe size: $($size / 1MB) MB"
+          if ($size -lt 1MB) { throw "Executable too small ($size bytes)" }
+          $files = @(Get-ChildItem -Recurse -File $artPath)
+          Write-Host "Artifact contains $($files.Count) files"
+          $files | ForEach-Object { Write-Host "  $($_.Name) ($($_.Length) bytes)" }
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
