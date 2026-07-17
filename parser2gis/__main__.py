@@ -8,6 +8,7 @@ from parser2gis.workspace import validate_workspace
 
 def main() -> None:
     validate_workspace()
+    sys.stdout.reconfigure(encoding='utf-8')
 
     parser = argparse.ArgumentParser(
         prog="parser2gis",
