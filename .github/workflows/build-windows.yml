@@ -29,19 +29,30 @@ jobs:
           pip install pyinstaller>=6.0
           pip install -e .
 
-      - name: Build with PyInstaller
+      - name: Clean previous build artifacts
+        run: |
+          if exist dist ( rmdir /s /q dist )
+          if exist build ( rmdir /s /q build )
+        shell: cmd
+
+      - name: Run pyinstaller directly (debug)
         id: build
-        run: python scripts/build.py
+        shell: cmd
+        run: |
+          pyinstaller parser2gis.spec --noconfirm --log-level DEBUG > pyinstaller_debug.log 2>&1
+          set EXITCODE=%ERRORLEVEL%
+          type pyinstaller_debug.log
+          if %EXITCODE% NEQ 0 exit /b %EXITCODE%
         continue-on-error: true
 
-      - name: Upload build log artifact
+      - name: Upload debug log
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: pyinstaller-output
-          path: pyinstaller_output.log
+          name: pyinstaller-debug-log
+          path: pyinstaller_debug.log
 
-      - name: Check build status
+      - name: Fail if build failed
         if: steps.build.outcome == 'failure'
         run: exit 1
 
