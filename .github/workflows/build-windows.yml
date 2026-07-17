@@ -119,6 +119,8 @@ jobs:
           $s | Out-File "$tmpDir\seed_stdout.txt"
           $hexBytes = [System.Text.Encoding]::UTF8.GetBytes($s)
           Write-Host "Seed stdout hex: $($hexBytes -join ' ')"
+          # Create annotation visible in GitHub API
+          Write-Host "::notice title=Seed stdout::$s"
           if ($s -notmatch "seeded") { throw "Seed output unexpected. Expected 'seeded' in: [$s]" }
 
           # 3. list cities (expect 3 seeded cities)
