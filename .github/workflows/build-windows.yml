@@ -105,11 +105,13 @@ jobs:
             if (Test-Path "$tmpDir\stdout.txt") { $out = [System.IO.File]::ReadAllText("$tmpDir\stdout.txt", [System.Text.Encoding]::UTF8) }
             if (Test-Path "$tmpDir\stderr.txt") { $err = [System.IO.File]::ReadAllText("$tmpDir\stderr.txt", [System.Text.Encoding]::UTF8) }
             if ($rc -ne 0) {
-              Write-Host "::notice title=Run-Exe failed::$argInfo exit=$rc"
+              $errLines = $err -split "`n"
+              $errSummary = $errLines[0..([Math]::Min(10, $errLines.Count-1))] -join " | "
+              Write-Host "::notice title=Run-Exe failed::$argInfo exit=$rc stderr=$errSummary"
               Write-Host "STDOUT: [$out]"
               Write-Host "STDERR:"
               Write-Host "$err"
-              $errLastLine = ($err -split "`n") | Select-Object -Last 1
+              $errLastLine = $errLines | Select-Object -Last 1
               throw "Exit code $rc for: parser2gis.exe $ArgumentList. Last stderr line: $errLastLine"
             }
             return $out
