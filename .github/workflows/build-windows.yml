@@ -97,16 +97,24 @@ jobs:
 
           function Run-Exe {
             param([string[]]$ArgumentList)
-            $p = Start-Process -FilePath $exePath -ArgumentList $ArgumentList -NoNewWindow -Wait -PassThru -RedirectStandardOutput "$tmpDir\stdout.txt" -RedirectStandardError "$tmpDir\stderr.txt"
-            $rc = $p.ExitCode
-            $out = [System.IO.File]::ReadAllText("$tmpDir\stdout.txt", [System.Text.Encoding]::UTF8)
-            $err = [System.IO.File]::ReadAllText("$tmpDir\stderr.txt", [System.Text.Encoding]::UTF8)
-            if ($rc -ne 0) {
-              Write-Host "STDOUT: $out"
-              Write-Host "STDERR: $err"
-              throw "Exit code $rc for: parser2gis.exe $ArgumentList"
+            $argInfo = $ArgumentList -join '|'
+            Write-Host "::notice title=Run-Exe::$argInfo"
+            try {
+              $p = Start-Process -FilePath $exePath -ArgumentList $ArgumentList -NoNewWindow -Wait -PassThru -RedirectStandardOutput "$tmpDir\stdout.txt" -RedirectStandardError "$tmpDir\stderr.txt" -ErrorAction Stop
+              $rc = $p.ExitCode
+              $out = [System.IO.File]::ReadAllText("$tmpDir\stdout.txt", [System.Text.Encoding]::UTF8)
+              $err = [System.IO.File]::ReadAllText("$tmpDir\stderr.txt", [System.Text.Encoding]::UTF8)
+              Write-Host "::notice title=Run-Exe result::$argInfo exit=$rc out_len=$($out.Length)"
+              if ($rc -ne 0) {
+                Write-Host "STDOUT: $out"
+                Write-Host "STDERR: $err"
+                throw "Exit code $rc for: parser2gis.exe $ArgumentList"
+              }
+              return $out
+            } catch {
+              Write-Host "::error title=Run-Exe exception::$argInfo $($_.Exception.Message)"
+              throw
             }
-            return $out
           }
 
           # 1. --version
