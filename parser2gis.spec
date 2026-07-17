@@ -122,8 +122,7 @@ a = Analysis(
 
 pyz = PYZ(a.pure)
 
-icon_path = os.path.join(PROJECT_ROOT, "parser2gis", "assets", "icon.ico")
-version_rc_path = os.path.join(PROJECT_ROOT, "parser2gis", "assets", "version.rc")
+icon_path = os.path.join(PROJECT_ROOT, "parser2gis", "assets", "app_icon.ico")
 
 exe = EXE(
     pyz,
@@ -144,7 +143,6 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
     icon=icon_path if os.path.exists(icon_path) else None,
-    version=version_rc_path if os.path.exists(version_rc_path) else None,
 )
 
 coll = COLLECT(
