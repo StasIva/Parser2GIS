@@ -99,8 +99,8 @@ jobs:
             param([string[]]$ArgumentList)
             $p = Start-Process -FilePath $exePath -ArgumentList $ArgumentList -NoNewWindow -Wait -PassThru -RedirectStandardOutput "$tmpDir\stdout.txt" -RedirectStandardError "$tmpDir\stderr.txt"
             $rc = $p.ExitCode
-            $out = Get-Content "$tmpDir\stdout.txt" -Raw
-            $err = Get-Content "$tmpDir\stderr.txt" -Raw
+            $out = [System.IO.File]::ReadAllText("$tmpDir\stdout.txt", [System.Text.Encoding]::UTF8)
+            $err = [System.IO.File]::ReadAllText("$tmpDir\stderr.txt", [System.Text.Encoding]::UTF8)
             if ($rc -ne 0) {
               Write-Host "STDOUT: $out"
               Write-Host "STDERR: $err"
@@ -168,8 +168,8 @@ jobs:
           $exportArgs = "export --task-id 0 --output $outFile"
           $p = Start-Process -FilePath $exePath -ArgumentList $exportArgs -NoNewWindow -Wait -PassThru -RedirectStandardOutput "$tmpDir\export_out.txt" -RedirectStandardError "$tmpDir\export_err.txt"
           $rc = $p.ExitCode
-          $exportOut = Get-Content "$tmpDir\export_out.txt" -Raw
-          $exportErr = Get-Content "$tmpDir\export_err.txt" -Raw
+           $exportOut = [System.IO.File]::ReadAllText("$tmpDir\export_out.txt", [System.Text.Encoding]::UTF8)
+          $exportErr = [System.IO.File]::ReadAllText("$tmpDir\export_err.txt", [System.Text.Encoding]::UTF8)
           Write-Host "::notice title=Check 6 export::$rc :: [$exportOut] :: [$exportErr]"
           if ($rc -ne 0) {
             Write-Host "Export exit code $rc (expected if no orgs exist): $exportOut$exportErr"
