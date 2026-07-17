@@ -88,6 +88,8 @@ jobs:
 
       - name: Smoke test — CLI execution
         shell: pwsh
+        env:
+          PYTHONIOENCODING: utf-8
         run: |
           $exePath = "dist/parser2gis/parser2gis.exe"
           $tmpDir = Join-Path $env:RUNNER_TEMP "smoke_test_data"
@@ -111,51 +113,62 @@ jobs:
           # 1. --version
           Write-Host "=== 1. --version ==="
           $v = Run-Exe "--version"
-          if ($v -notmatch "parser2gis") { throw "Unexpected version output" }
+          $vOk = ($v -match "parser2gis")
+          Write-Host "::notice title=Check 1 --version::$vOk :: [$v]"
+          if (-not $vOk) { throw "Unexpected version output. Got: [$v]" }
 
           # 2. seed (initializes DB, runs migrations, inserts seed data)
           Write-Host "=== 2. seed ==="
           $s = Run-Exe "seed"
           Write-Host "Seed stdout: [$s]"
-          # Save for debug artifact
           $s | Out-File "$tmpDir\seed_stdout.txt"
           $hexBytes = [System.Text.Encoding]::UTF8.GetBytes($s)
           Write-Host "Seed stdout hex: $($hexBytes -join ' ')"
-          # Create annotation visible in GitHub API
-          Write-Host "::notice title=Seed stdout::$s"
-          if ($s -notmatch "seeded") { throw "Seed output unexpected. Expected 'seeded' in: [$s]" }
+          Write-Host "::notice title=Check 2 seed::[$s]"
+          $sOk = ($s -match "seeded")
+          if (-not $sOk) { throw "Seed output unexpected. Expected 'seeded' in: [$s]" }
 
           # 3. list cities (expect 3 seeded cities)
           Write-Host "=== 3. list cities ==="
           $c = Run-Exe "list" "cities"
           Write-Host "Cities stdout: [$c]"
-          # Save for debug artifact
           $c | Out-File "$tmpDir\cities_stdout.txt"
           $hexBytesC = [System.Text.Encoding]::UTF8.GetBytes($c)
           Write-Host "Cities stdout hex: $($hexBytesC -join ' ')"
-          if ($c -notmatch "Москва") { throw "Expected Москва in city list. Got: [$c]" }
-          if ($c -notmatch "Санкт-Петербург") { throw "Expected Санкт-Петербург in city list. Got: [$c]" }
-          if ($c -notmatch "Новосибирск") { throw "Expected Новосибирск in city list. Got: [$c]" }
+          Write-Host "::notice title=Check 3 cities::[$c]"
+          $cMoscow = ($c -match "Москва")
+          $cSpb = ($c -match "Санкт-Петербург")
+          $cNovosibirsk = ($c -match "Новосибирск")
+          Write-Host "::notice title=Check 3a Moscow::$cMoscow :: [$c]"
+          Write-Host "::notice title=Check 3b SPB::$cSpb :: [$c]"
+          Write-Host "::notice title=Check 3c Novosibirsk::$cNovosibirsk :: [$c]"
+          if (-not $cMoscow) { throw "Expected Москва in city list. Got: [$c]" }
+          if (-not $cSpb) { throw "Expected Санкт-Петербург in city list. Got: [$c]" }
+          if (-not $cNovosibirsk) { throw "Expected Новосибирск in city list. Got: [$c]" }
 
           # 4. list rubrics (expect 10 seeded rubrics)
           Write-Host "=== 4. list rubrics ==="
           $r = Run-Exe "list" "rubrics"
           Write-Host "Rubrics stdout: [$r]"
+          Write-Host "::notice title=Check 4 rubrics::[$r]"
           if ($r -notmatch "Авто") { throw "Expected rubric in list. Got: [$r]" }
 
           # 5. list tasks (expect empty, but no crash)
           Write-Host "=== 5. list tasks ==="
           $t = Run-Exe "list" "tasks"
+          Write-Host "::notice title=Check 5 tasks::[$t]"
           if ($t -ne "") { Write-Host "Tasks (expected empty): $t" }
 
           # 6. export (create a dummy org first via export with --task-id 0)
           #    Skip export if no orgs exist — it exits with code 1
           Write-Host "=== 6. export (via --task-id 0, expects no orgs) ==="
           $outFile = "$tmpDir\test_export.xlsx"
-          $p = Start-Process -FilePath $exePath -ArgumentList @("export", "--task-id", "0", "--output", $outFile) -NoNewWindow -Wait -PassThru -RedirectStandardOutput "$tmpDir\export_out.txt" -RedirectStandardError "$tmpDir\export_err.txt"
+          $exportArgs = "export --task-id 0 --output $outFile"
+          $p = Start-Process -FilePath $exePath -ArgumentList $exportArgs -NoNewWindow -Wait -PassThru -RedirectStandardOutput "$tmpDir\export_out.txt" -RedirectStandardError "$tmpDir\export_err.txt"
           $rc = $p.ExitCode
           $exportOut = Get-Content "$tmpDir\export_out.txt" -Raw
           $exportErr = Get-Content "$tmpDir\export_err.txt" -Raw
+          Write-Host "::notice title=Check 6 export::$rc :: [$exportOut] :: [$exportErr]"
           if ($rc -ne 0) {
             Write-Host "Export exit code $rc (expected if no orgs exist): $exportOut$exportErr"
           }
