@@ -91,6 +91,7 @@ jobs:
         run: |
           $exePath = "dist/parser2gis/parser2gis.exe"
           $tmpDir = Join-Path $env:RUNNER_TEMP "smoke_test_data"
+          New-Item -ItemType Directory -Force -Path $tmpDir | Out-Null
 
           function Run-Exe($args) {
             $p = Start-Process -FilePath $exePath -ArgumentList $args -NoNewWindow -Wait -PassThru -RedirectStandardOutput "$tmpDir\stdout.txt" -RedirectStandardError "$tmpDir\stderr.txt"
