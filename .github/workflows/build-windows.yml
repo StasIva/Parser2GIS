@@ -188,6 +188,7 @@ jobs:
 
       - name: Upload debug output (always)
         if: always()
+        continue-on-error: true
         shell: pwsh
         run: |
           $tmpDir = Join-Path $env:RUNNER_TEMP "smoke_test_data"
@@ -216,6 +217,7 @@ jobs:
           path: debug_output/
 
       - name: Upload build artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: parser2gis-windows
