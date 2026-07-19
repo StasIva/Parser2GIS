@@ -5,13 +5,15 @@ from typing import Any, Callable
 from parser2gis.services.city_service import CityService
 from parser2gis.services.rubric_service import RubricService
 from parser2gis.services.task_service import TaskService
+from parser2gis.task_manager.manager import TaskManager
 
 
 class AppController:
-    def __init__(self) -> None:
+    def __init__(self, task_manager: TaskManager | None = None) -> None:
         self._city_service = CityService()
         self._rubric_service = RubricService()
         self._task_service = TaskService()
+        self._task_manager = task_manager
         self._on_tasks_changed: Callable[[], None] | None = None
         self._on_progress: Callable[[int, int, int], None] | None = None
 
@@ -34,7 +36,10 @@ class AppController:
         return task.to_dict()
 
     def start_task(self, task_id: int) -> None:
-        self._task_service.update_status(task_id, "running")
+        if self._task_manager:
+            self._task_manager.start_task(task_id)
+        else:
+            self._task_service.update_status(task_id, "running")
         if self._on_tasks_changed:
             self._on_tasks_changed()
 

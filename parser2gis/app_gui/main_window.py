@@ -23,16 +23,31 @@ from parser2gis.app_gui.dialogs.update_directory_dialog import UpdateDirectoryDi
 from parser2gis.app_gui.models.task_table_model import TaskTableModel
 from parser2gis.app_gui.widgets.progress_delegate import ProgressDelegate
 from parser2gis.settings.settings import load_settings
+from parser2gis.source_2gis.city_resolver import CityResolver
+from parser2gis.source_2gis.http_client import HttpClient
+from parser2gis.source_2gis.org_fetcher import OrgFetcher
+from parser2gis.source_2gis.rubric_resolver import RubricResolver
+from parser2gis.task_manager.manager import TaskManager
 
 
 class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
-        self._controller = AppController()
         self._settings = load_settings()
+        self._controller = AppController(task_manager=self._create_task_manager())
         self._setup_ui()
         self._connect_signals()
         self._refresh_tasks()
+
+    def _create_task_manager(self) -> TaskManager:
+        client = HttpClient(delay_ms=self._settings.request_delay_ms)
+        return TaskManager(
+            client,
+            CityResolver(client),
+            RubricResolver(client),
+            OrgFetcher(client),
+            max_concurrent=self._settings.max_concurrent_tasks,
+        )
 
     def _setup_ui(self) -> None:
         self.setWindowTitle("2GIS Parser")
