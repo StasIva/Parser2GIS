@@ -37,7 +37,7 @@ class ProgressDelegate(QStyledItemDelegate):
 
         painter.setPen(Qt.GlobalColor.black)
         painter.drawText(bar_rect, Qt.AlignmentFlag.AlignCenter, f"{pct}%")
-        painter.restoreState()
+        painter.restore()
 
     def sizeHint(self, option: QStyleOptionViewItem, index: QModelIndex) -> QSize:
         return QSize(100, 24)
