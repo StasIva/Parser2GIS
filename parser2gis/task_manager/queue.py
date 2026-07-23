@@ -16,11 +16,11 @@ class TaskQueue:
         self._stop_event = threading.Event()
 
     def enqueue(self, task: Task, priority: int = 0) -> None:
-        self._queue.put((priority, task.id, task))
+        self._pending.put((priority, task.id, task))
 
     def dequeue(self) -> Task | None:
         try:
-            _, _, task = self._queue.get_nowait()
+            _, _, task = self._pending.get_nowait()
             return task
         except Exception:
             return None
@@ -62,4 +62,4 @@ class TaskQueue:
 
     @property
     def queued_count(self) -> int:
-        return self._queue.qsize()
+        return self._pending.qsize()
