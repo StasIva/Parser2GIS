@@ -10,6 +10,7 @@ from parser2gis.storage.repositories.task_repo import TaskRepo
 class TaskService:
     def create(self, name: str, city_id: int, rubric_id: int) -> Task:
         data = TaskRepo.create(name, city_id, rubric_id)
+        ConnectionManager.commit()
         return Task.from_dict(data)
 
     def get_by_id(self, task_id: int) -> Task | None:
@@ -21,6 +22,7 @@ class TaskService:
 
     def update_status(self, task_id: int, status: str) -> Task:
         data = TaskRepo.update_status(task_id, status)
+        ConnectionManager.commit()
         return Task.from_dict(data)
 
     def update_progress(
@@ -30,6 +32,7 @@ class TaskService:
         errors_count: int | None = None,
     ) -> Task | None:
         data = TaskRepo.update_progress(task_id, progress, orgs_found, orgs_saved, errors_count)
+        ConnectionManager.commit()
         return Task.from_dict(data) if data else None
 
     def update_checkpoint(self, task_id: int, checkpoint_data: str) -> None:
@@ -47,4 +50,5 @@ class TaskService:
 
     def delete_by_id(self, record_id: int) -> bool:
         result = TaskRepo.delete_by_id(record_id)
+        ConnectionManager.commit()
         return result
