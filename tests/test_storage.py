@@ -491,6 +491,131 @@ class TestTaskManagerModels:
         assert info.status == "created"
 
 
+class TestExportIntegration:
+    @property
+    def _tid(self) -> int:
+        tasks = TaskRepo.get_all()
+        return tasks[0]["id"] if tasks else 1
+
+    def _seed_orgs(self, task_id: int, count: int = 3) -> None:
+        for i in range(count):
+            OrganizationRepo.create(
+                task_id=task_id,
+                name=f"Test Org {i}",
+                source_id=f"src_{i}",
+                city="Москва",
+                address=f"ул. Тестовая, д. {i}",
+                phones="+7 (495) 123-45-67",
+                emails="test@example.com",
+                website="https://example.com",
+                rubric_name="Тестовая рубрика",
+                work_hours="09:00-18:00",
+                lat=55.75 + i * 0.01,
+                lon=37.62 + i * 0.01,
+            )
+
+    def test_export_xlsx_with_db_data(self) -> None:
+        from parser2gis.exporter.xlsx_exporter import XlsxExporter
+
+        tid = self._tid
+        self._seed_orgs(tid)
+
+        orgs = OrganizationRepo.find_by_task_id(tid)
+        assert len(orgs) == 3
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = os.path.join(tmpdir, "test.xlsx")
+            from parser2gis.domain.models import Organization
+            records = [Organization.from_dict(o).to_dict() for o in orgs]
+            result = XlsxExporter().export(records, path)
+            assert os.path.isfile(result), f"XLSX file not created at {result}"
+
+    def test_export_csv_with_db_data(self) -> None:
+        from parser2gis.exporter.csv_exporter import CsvExporter
+
+        tid = self._tid
+        self._seed_orgs(tid)
+
+        orgs = OrganizationRepo.find_by_task_id(tid)
+        assert len(orgs) == 3
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = os.path.join(tmpdir, "test.csv")
+            from parser2gis.domain.models import Organization
+            records = [Organization.from_dict(o).to_dict() for o in orgs]
+            result = CsvExporter().export(records, path)
+            assert os.path.isfile(result), f"CSV file not created at {result}"
+
+    def test_export_json_with_db_data(self) -> None:
+        from parser2gis.exporter.json_exporter import JsonExporter
+
+        tid = self._tid
+        self._seed_orgs(tid)
+
+        orgs = OrganizationRepo.find_by_task_id(tid)
+        assert len(orgs) == 3
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = os.path.join(tmpdir, "test.json")
+            from parser2gis.domain.models import Organization
+            records = [Organization.from_dict(o).to_dict() for o in orgs]
+            result = JsonExporter().export(records, path)
+            assert os.path.isfile(result), f"JSON file not created at {result}"
+
+    def test_full_export_flow_via_export_service(self) -> None:
+        tid = self._tid
+        self._seed_orgs(tid)
+
+        from parser2gis.services.organization_service import OrganizationService
+        from parser2gis.services.export_service import ExportService
+
+        orgs = OrganizationService().find_by_task_id(tid)
+        assert len(orgs) == 3
+
+        records = [o.to_dict() for o in orgs]
+        exporters = {"xlsx": None, "csv": None, "json": None}
+        from parser2gis.exporter import XlsxExporter, CsvExporter, JsonExporter
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            for fmt, exporter_cls in [("xlsx", XlsxExporter), ("csv", CsvExporter), ("json", JsonExporter)]:
+                path = os.path.join(tmpdir, f"test.{fmt}")
+                exporter = exporter_cls()
+                exporter.export(records, path)
+                assert os.path.isfile(path), f"{fmt.upper()} file not created at {path}"
+
+                ExportService().create(tid, fmt, path, len(records), status="done")
+
+        from parser2gis.storage.repositories.export_repo import ExportRepo
+        exports = ExportRepo.find_by_task_id(tid)
+        assert len(exports) == 3
+        for exp in exports:
+            assert exp["status"] == "done"
+
+    def test_export_with_empty_orgs_does_not_create_file(self) -> None:
+        from parser2gis.services.organization_service import OrganizationService
+
+        tid = self._tid
+        orgs = OrganizationService().find_by_task_id(tid)
+        assert len(orgs) == 0
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = os.path.join(tmpdir, "test.xlsx")
+            assert not os.path.isfile(path), "File should not exist before export"
+
+    def test_org_to_dict_roundtrip(self) -> None:
+        from parser2gis.domain.models import Organization
+
+        org = Organization.from_dict({
+            "id": 1, "task_id": 1, "name": "Test",
+            "phones": "+7123", "lat": 55.0, "lon": 37.0,
+        })
+        d = org.to_dict()
+        assert d["name"] == "Test"
+        assert d["phones"] == "+7123"
+        assert d["lat"] == 55.0
+        assert d["lon"] == 37.0
+
+
 class TestCrashRecovery:
     def test_checkpoint_round_trip(self) -> None:
         from parser2gis.task_manager.recovery import CrashRecovery
