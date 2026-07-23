@@ -22,6 +22,9 @@ from parser2gis.app_gui.dialogs.task_name_dialog import TaskNameDialog
 from parser2gis.app_gui.dialogs.update_directory_dialog import UpdateDirectoryDialog
 from parser2gis.app_gui.models.task_table_model import TaskTableModel
 from parser2gis.app_gui.widgets.progress_delegate import ProgressDelegate
+from parser2gis.exporter import CsvExporter, JsonExporter, XlsxExporter
+from parser2gis.services.export_service import ExportService
+from parser2gis.services.organization_service import OrganizationService
 from parser2gis.settings.settings import load_settings
 from parser2gis.source_2gis.city_resolver import CityResolver
 from parser2gis.source_2gis.http_client import HttpClient
@@ -146,9 +149,47 @@ class MainWindow(QMainWindow):
             self._controller.stop_task(task.get("id"))
 
     def _on_export(self) -> None:
+        index = self._task_table.currentIndex()
+        if not index.isValid():
+            self._status_bar.showMessage("Выберите задачу для экспорта")
+            return
+        task = self._model.get_task(index.row())
+        if not task:
+            return
+
         dialog = ExportDialog(self)
-        if dialog.exec() == ExportDialog.Accepted:
-            self._status_bar.showMessage("Экспорт завершён")
+        if dialog.exec() != ExportDialog.Accepted:
+            return
+
+        fmt = dialog.selected_format()
+        file_path = dialog.file_path()
+        if not file_path:
+            self._status_bar.showMessage("Не указан путь для сохранения")
+            return
+
+        orgs = OrganizationService().find_by_task_id(task["id"])
+        if not orgs:
+            self._status_bar.showMessage("Нет данных для экспорта")
+            return
+
+        records = [o.to_dict() for o in orgs]
+        exporters = {"xlsx": XlsxExporter(), "csv": CsvExporter(), "json": JsonExporter()}
+        exporter = exporters.get(fmt)
+        if not exporter:
+            self._status_bar.showMessage(f"Неизвестный формат: {fmt}")
+            return
+
+        try:
+            self._status_bar.showMessage(
+                f"Экспорт {fmt.upper()}... ({len(records)} записей)"
+            )
+            exporter.export(records, file_path)
+            ExportService().create(task["id"], fmt, file_path, len(records), status="done")
+            self._status_bar.showMessage(
+                f"Экспорт завершён: {file_path} ({len(records)} записей)"
+            )
+        except Exception as e:
+            self._status_bar.showMessage(f"Ошибка экспорта: {e}")
 
     def _on_update_directory(self) -> None:
         dialog = UpdateDirectoryDialog(self)
