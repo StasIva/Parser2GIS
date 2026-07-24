@@ -15,6 +15,7 @@ from parser2gis.services.directory_update_service import (
     DirectoryUpdateResult,
     DirectoryUpdateService,
 )
+from parser2gis.settings.settings import load_settings
 from parser2gis.source_2gis.http_client import HttpClient
 
 
@@ -24,8 +25,9 @@ class UpdateWorker(QThread):
 
     def run(self) -> None:
         client = HttpClient(delay_ms=200)
+        api_key = load_settings().api_key
         try:
-            service = DirectoryUpdateService(client)
+            service = DirectoryUpdateService(client, api_key=api_key)
             self.progress.emit("Обновление списка городов...")
             cities_result = service.update_cities()
             self.progress.emit(

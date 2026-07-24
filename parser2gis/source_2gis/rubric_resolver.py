@@ -4,7 +4,7 @@ from typing import Any
 
 from parser2gis.source_2gis.http_client import HttpClient
 
-RUBRIC_SEARCH_URL = "https://catalog.api.2gis.com/3.0/rubrics/search"
+RUBRIC_SEARCH_URL = "https://catalog.api.2gis.com/2.0/catalog/rubric/search"
 
 
 class RubricResolver:

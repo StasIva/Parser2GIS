@@ -45,6 +45,10 @@ class SettingsDialog(QDialog):
         self._data_dir_edit = QLineEdit(settings.data_directory)
         form.addRow("Каталог данных:", self._data_dir_edit)
 
+        self._api_key_edit = QLineEdit(settings.api_key)
+        self._api_key_edit.setEchoMode(QLineEdit.EchoMode.Password)
+        form.addRow("API ключ 2GIS:", self._api_key_edit)
+
         layout.addLayout(form)
 
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok |
@@ -58,6 +62,7 @@ class SettingsDialog(QDialog):
         self._original.request_delay_ms = self._delay_spin.value()
         self._original.language = self._language_combo.currentText()
         self._original.theme = self._theme_combo.currentText()
-        self._original.data_directory = self._data_path_edit.text()
+        self._original.data_directory = self._data_dir_edit.text()
+        self._original.api_key = self._api_key_edit.text()
         SettingsManager.save(self._original)
         self.accept()

@@ -4,8 +4,8 @@ from typing import Any, Callable
 
 from parser2gis.source_2gis.http_client import HttpClient
 
-ORG_LIST_URL = "https://catalog.api.2gis.com/3.0/catalog/search"
-ORG_CARD_URL = "https://catalog.api.2gis.com/3.0/catalog/card"
+ORG_LIST_URL = "https://catalog.api.2gis.com/3.0/items"
+ORG_CARD_URL = "https://catalog.api.2gis.com/3.0/items"
 
 
 class OrgFetcher:
@@ -26,6 +26,9 @@ class OrgFetcher:
             params["key"] = self._api_key
         response = self._client.get(ORG_LIST_URL, params=params)
         data = response.json()
+        meta = data.get("meta", {})
+        if meta.get("code", 200) != 200:
+            return {"items": [], "total": 0}
         return data.get("result", {})
 
     def fetch_card(self, org_id: str) -> dict[str, Any] | None:
@@ -34,6 +37,9 @@ class OrgFetcher:
             params["key"] = self._api_key
         response = self._client.get(ORG_CARD_URL, params=params)
         data = response.json()
+        meta = data.get("meta", {})
+        if meta.get("code", 200) != 200:
+            return None
         items = data.get("result", {}).get("items", []) or []
         return items[0] if items else None
 

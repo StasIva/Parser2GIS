@@ -17,8 +17,14 @@ class AppController:
         self._on_tasks_changed: Callable[[], None] | None = None
         self._on_progress: Callable[[int, int, int], None] | None = None
 
+        if task_manager:
+            task_manager.set_on_progress(self._on_task_progress)
+
     def set_on_tasks_changed(self, callback: Callable[[], None]) -> None:
         self._on_tasks_changed = callback
+
+    def set_on_progress(self, callback: Callable[[int, int, int], None]) -> None:
+        self._on_progress = callback
 
     def get_tasks(self) -> list[dict[str, Any]]:
         return [t.to_dict() for t in self._task_service.get_all()]
@@ -50,6 +56,12 @@ class AppController:
 
     def stop_task(self, task_id: int) -> None:
         self._task_service.update_status(task_id, "done")
+        if self._on_tasks_changed:
+            self._on_tasks_changed()
+
+    def _on_task_progress(self, task: Any) -> None:
+        if self._on_progress:
+            self._on_progress(task.id, task.progress, task.status)
         if self._on_tasks_changed:
             self._on_tasks_changed()
 

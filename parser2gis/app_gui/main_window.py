@@ -44,11 +44,12 @@ class MainWindow(QMainWindow):
 
     def _create_task_manager(self) -> TaskManager:
         client = HttpClient(delay_ms=self._settings.request_delay_ms)
+        api_key = self._settings.api_key
         return TaskManager(
             client,
-            CityResolver(client),
-            RubricResolver(client),
-            OrgFetcher(client),
+            CityResolver(client, api_key),
+            RubricResolver(client, api_key),
+            OrgFetcher(client, api_key),
             max_concurrent=self._settings.max_concurrent_tasks,
         )
 
@@ -101,6 +102,7 @@ class MainWindow(QMainWindow):
 
     def _connect_signals(self) -> None:
         self._controller.set_on_tasks_changed(self._refresh_tasks)
+        self._controller.set_on_progress(self._on_task_progress)
         self._create_btn.clicked.connect(self._on_create)
         self._start_btn.clicked.connect(self._on_start)
         self._stop_btn.clicked.connect(self._on_stop)
@@ -114,6 +116,11 @@ class MainWindow(QMainWindow):
         summary = self._controller.get_summary()
         total = sum(summary.values())
         self._status_bar.showMessage(f"Всего задач: {total}")
+
+    def _on_task_progress(self, task_id: int, progress: int, status: str) -> None:
+        self._status_bar.showMessage(
+            f"Задача {task_id}: {status}, {progress}%"
+        )
 
     def _on_create(self) -> None:
         cities = self._controller.get_cities()

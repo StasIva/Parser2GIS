@@ -4,7 +4,7 @@ from typing import Any
 
 from parser2gis.source_2gis.http_client import HttpClient
 
-CITY_SEARCH_URL = "https://catalog.api.2gis.com/3.0/items/city"
+CITY_SEARCH_URL = "https://catalog.api.2gis.com/3.0/items"
 
 
 class CityResolver:
@@ -13,7 +13,7 @@ class CityResolver:
         self._api_key = api_key
 
     def resolve(self, city_name: str) -> dict[str, Any] | None:
-        params: dict[str, str] = {"q": city_name, "limit": "5", "type": "city"}
+        params: dict[str, str] = {"q": city_name, "limit": "5", "type": "adm_div.city"}
         if self._api_key:
             params["key"] = self._api_key
         response = self._client.get(CITY_SEARCH_URL, params=params)
@@ -34,7 +34,7 @@ class CityResolver:
         return None
 
     def search(self, query: str) -> list[dict[str, Any]]:
-        params: dict[str, str] = {"q": query, "type": "city"}
+        params: dict[str, str] = {"q": query, "type": "adm_div.city"}
         if self._api_key:
             params["key"] = self._api_key
         response = self._client.get(CITY_SEARCH_URL, params=params)

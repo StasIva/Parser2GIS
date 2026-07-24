@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import threading
 from queue import PriorityQueue
-from typing import Any, Callable
+from typing import Callable
 
 from parser2gis.domain.models import Task
 
@@ -34,12 +34,15 @@ class TaskQueue:
         while not self._stop_event.is_set():
             with self._lock:
                 if len(self._running) >= self._max_concurrent:
+                    self._stop_event.wait(0.5)
                     continue
             task = self.dequeue()
             if task is not None:
                 with self._lock:
                     if task.id not in self._running:
-                        t = threading.Thread(target=self._run_task, args=(task, worker), daemon=True)
+                        t = threading.Thread(
+                            target=self._run_task, args=(task, worker), daemon=True,
+                        )
                         self._running[task.id] = t
                         t.start()
             else:

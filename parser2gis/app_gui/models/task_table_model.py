@@ -1,11 +1,22 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Any
 
 from PySide6.QtCore import QAbstractTableModel, QModelIndex, Qt
 
-
 COLUMNS = ["ID", "Имя", "Статус", "Прогресс", "Найдено", "Сохранено", "Ошибки", "Создана"]
+
+
+def _utc_to_local(utc_str: str) -> str:
+    if not utc_str:
+        return ""
+    try:
+        dt_utc = datetime.strptime(utc_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+        dt_local = dt_utc.astimezone()
+        return dt_local.strftime("%Y-%m-%d %H:%M:%S")
+    except ValueError:
+        return utc_str
 
 
 class TaskTableModel(QAbstractTableModel):
@@ -49,7 +60,7 @@ class TaskTableModel(QAbstractTableModel):
             if col == 6:
                 return task.get("errors_count", 0)
             if col == 7:
-                return task.get("created_at", "")
+                return _utc_to_local(task.get("created_at", ""))
         if role == Qt.ItemDataRole.TextAlignmentRole and col == 3:
             return Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter
         return None

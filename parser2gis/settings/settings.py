@@ -26,6 +26,7 @@ class AppSettings(BaseModel):
     )
     max_concurrent_tasks: int = 3
     request_delay_ms: int = 500
+    api_key: str = ""
     user_agent: str = (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
         "AppleWebKit/537.36 parser2gis/0.1.0"
